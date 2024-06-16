@@ -4,18 +4,44 @@ import { Tabs } from 'expo-router';
 
 export default function TabsLayout() {
   return (
-    <Tabs>
+    <Tabs 
+        screenOptions={{
+        tabBarActiveTintColor: '#3f4f52',
+        tabBarInactiveTintColor: '#52796f',
+        tabBarStyle: {
+          backgroundColor: "#84a98c",
+        }
+        }}>
+        <Tabs.Screen 
+            name = "gardens"
+            options = {{
+                headerShown: false,
+                headerTitle: "Gardens",
+                headerStyle: {
+                    backgroundColor: "#84a98c"
+                },
+                title: "Gardens"
+            }}
+        />
         <Tabs.Screen 
             name = "index"
             options = {{
-                headerTitle: "Home",
-                title: "Home"
+                headerShown: false,
+                headerTitle: "Tasks",
+                headerStyle: {
+                    backgroundColor: "#84a98c"
+                },
+                title: "Tasks"
             }}
         />
         <Tabs.Screen 
             name = "users/[id]"
             options = {{
-                headerTitle: "User Page",
+                headerShown: false,
+                headerTitle: "User",
+                headerStyle: {
+                    backgroundColor: "#84a98c"
+                },
                 title: "User"
             }}
         />

@@ -9,7 +9,7 @@ import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  //firebase config info here
+  //config here
 };
 
 // Initialize Firebase

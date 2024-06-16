@@ -56,6 +56,7 @@ export default function RootLayout() {
         console.log('user', user);
         console.log(JSON.stringify(user, null, 2));
         setUser(user);
+
         //saves user sign info locally, encrypt this for more security
         //await AsyncStorage.setItem("@user", JSON.stringify(user))
     });
@@ -63,7 +64,7 @@ export default function RootLayout() {
   }, []);
 
   //check google sign in
-  //handle other possibilities besides "success"
+  //TODO: handle other possibilities besides "success"
   useEffect(() => {
     if (response?.type == "success") {
       const { id_token } = response.params;
@@ -84,7 +85,11 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="(tabs)"
             options= {{
-                headerShown: false
+                title: 'Plant App',
+                headerShown: true,
+                headerStyle: {
+                  backgroundColor: "#84a98c"
+                },
             }}
         /> 
       </Stack>
