@@ -28,7 +28,8 @@ export default function RootLayout() {
   const [request, response, promptAsync] = Google.useAuthRequest({
     iosClientId: '', //insert ios client id here
     androidClientId: '' //insert android client id here
-  });
+    });
+
 
 
   //check locally if a previous sign in in saved and load it up

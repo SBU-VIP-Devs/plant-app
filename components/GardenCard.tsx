@@ -1,45 +1,55 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Button, View, StyleSheet, Text, Image, Pressable } from 'react-native';
+import { GardenData } from '../app/(tabs)/gardens';
+import { FIREBASE_AUTH } from '../firebaseconfig';
 
-interface Props {
-    item: any
+interface GardenCardProps {
+    item: GardenData
 }
 
-export default function GardenCard({ item }: Props) {
-    var memberText = ''
+export default function GardenCard({item}: GardenCardProps) {
+    
+    const user = FIREBASE_AUTH.currentUser;
+    const username = user?.displayName ? user?.displayName : 'Unknown User'
+    const userId = user ? user.uid : null
 
-    if(item.numMembers == 1) {
-        memberText = '1 Member';
-    } else if(item.numMembers > 1) {
-        memberText = item.numMembers + ' Members';
-    } else {
-        memberText = 'No members yet'
-    }
+    //TODO:... implement item.isJoined to render buttons based on if youre in or not
+    var memberText = 'default member text'
+
+    //TODO: implement num member count
+    // if(item.numMembers == 1) {
+    //     memberText = '1 Member';
+    // } else if(item.numMembers > 1) {
+    //     memberText = item.numMembers + ' Members';
+    // } else {
+    //     memberText = 'No members yet'
+    // }
 
     return (
         <View style={styles.container}>
             <View style={styles.header}>
                 <Image 
                     style={styles.adminIcon} 
-                    source={item.adminImg}
+                    source={{ uri: item.userImage }}
                 />
                 <View style={styles.headerText}>
-                    <Text style={styles.darkTitle}>{item.name}</Text>
-                    <Text style={styles.darkSubtitle}>administrated by {item.admin}</Text>
+                    <Text style={styles.darkTitle}>{item.gardenName}</Text>
+                    <Text style={styles.darkSubtitle}>administrated by {item.username}</Text>
                 </View>
             </View>
             <Text style={styles.gardenDesc}>
                 {item.desc}
             </Text>
-            {item.gardenImg ?
+            {item.imageURL ?
             <Image 
                 style={styles.gardenImage} 
-                source={item.gardenImg}
+                source={{ uri: item.imageURL }}
+                onError={(e) => console.log('Image Load Error:', e.nativeEvent.error)}
             /> :
             <View style={{borderWidth: 0.5, borderColor: '#2f3e46', marginLeft: 15, marginRight: 15}}/>
             }
-            <View style={{ alignItems: 'center', padding: 15}}>
-                {item.isJoined ? 
+            <View style={{ alignItems: 'center', padding: 15, flexDirection: 'row'}}>
+                {!item.joined ? 
                     <Pressable style={styles.joinButton} onPress={() => console.log('join garden')}>
                         <Text style={styles.darkTitle}>Join Garden</Text>
                         <Text style={styles.darkSubtitle}>{memberText}</Text>
@@ -49,6 +59,10 @@ export default function GardenCard({ item }: Props) {
                         <Text style={styles.lightSubtitle}>{memberText}</Text>
                     </Pressable>
                 }
+                {(userId?item.roles[userId]==="admin":false) ? <Pressable style={styles.leaveButton} onPress={() => console.log('delete garden')}>
+                    <Text style={styles.lightTitle}>Garden Settings</Text>
+                    <Text style={styles.lightSubtitle}>delete garden</Text>
+                </Pressable> : null}
             </View>
         </View>
     )
