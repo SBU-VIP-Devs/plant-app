@@ -11,11 +11,7 @@ import { addDoc, collection, onSnapshot } from 'firebase/firestore';
 import { FIREBASE_STORAGE, FIRESTORE_DB } from '../../firebaseconfig';
 import { FIREBASE_AUTH } from '../../firebaseconfig';
 
-
-
-export default function NewGarden(gardenList: any, updateGardenList: any) {
-
-    
+export default function NewGarden() {
 
     const testImage = "https://firebasestorage.googleapis.com/v0/b/plantapp-3d30d.appspot.com/o/GardenImages%2F1719431663739?alt=media&token=f53cdd64-a1ef-42f7-877a-432939b3867b";
     const [image, setImage] = useState<string | null>(null)
@@ -65,19 +61,6 @@ export default function NewGarden(gardenList: any, updateGardenList: any) {
         }
       });
     }
-
-    // useEffect(() => {
-    //   const unsubscribe = onSnapshot(collection(FIRESTORE_DB, 'garden-post-info'), (snapshot) => {
-    //     snapshot.docChanges().forEach((change) => {
-    //       if(change.type == 'added') {
-    //         console.log('New file', change.doc.data())
-    //         updateGardenList((prevFiles: any) => [...prevFiles, change.doc.data()])
-    //       }
-    //     })
-    //   })
-    
-    //   return () => unsubscribe();
-    // }, [])
     
     async function uploadGardenRecord(imageURL: string | null, createdAt: string, 
       gardenName: string, desc: string, username: string, userId: string | null, roles: {[key: string]: string} | null) {
@@ -137,29 +120,7 @@ export default function NewGarden(gardenList: any, updateGardenList: any) {
         await uploadGardenRecord(null, new Date().toISOString(), name, desc, username, userId, userList)
       }
     }
-
-    // const postGarden = async () => {
-    //   console.log('posting garden...')
-    //   const uploadUri = image;
-    //   let filename = uploadUri.substring(uploadUri.lastIndexOf('/')+1)
-    //   setUploading(true)
-    //   try {
-    //     console.log('uploading...')
-    //     await storage().ref(filename).putFile(uploadUri)
-    //     console.log('successfully uploaded...')
-    //     setUploading(false)
-    //     Alert.alert(
-    //       'Image uploaded!',
-    //       'Your image has been uploaded to Firebase Cloud Storage Successfully!'
-    //     )
-    //   } catch(e) {
-    //     console.log(e)
-    //   }
-    //   setImage('../../assets/gardens/garden1.jpeg')
-    // }
-
-  
-
+    
     return (
       <View style={styles.container}>
         <Text style={styles.header}>New Garden Setup</Text>

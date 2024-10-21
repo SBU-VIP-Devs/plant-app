@@ -26,8 +26,8 @@ export default function RootLayout() {
 
   //for google auth sign in
   const [request, response, promptAsync] = Google.useAuthRequest({
-    iosClientId: '', //insert ios client id here
-    androidClientId: '' //insert android client id here
+    iosClientId: "", //insert ios client id here
+    androidClientId: "" //insert android client id here
     });
 
 
