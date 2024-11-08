@@ -25,47 +25,46 @@ export default function Login() {
   const [taskList, updateTaskList] = useState(null);
   const [loading, setLoading] = useState(true);
 
-    //useEffect(() => {
-        const getTaskList = async () => { 
-            try {
-                const list: any = []
-                const querySnapshot = await getDocs(collection(FIRESTORE_DB, "task-post-info")) 
-                querySnapshot.forEach((doc) => {
-                    // doc.data() is never undefined for query doc snapshots
-                    //console.log(doc.id, " => ", doc.data());
-                    const {
-                      taskName,
-                      taskTime,
-                      desc,
-                      location,
-                      garden,
-                      username,
-                    } = doc.data()
-                    list.push({ 
-                        id: doc.id,
-                        taskName,
-                        taskTime,
-                        location,
-                        desc,
-                        garden,
-                        username,
-                    })
-                });
-                updateTaskList(list)
+    const getTaskList = async () => { 
+        try {
+            const list: any = []
+            const querySnapshot = await getDocs(collection(FIRESTORE_DB, "task-post-info")) 
+            querySnapshot.forEach((doc) => {
+                // doc.data() is never undefined for query doc snapshots
+                //console.log(doc.id, " => ", doc.data());
+                const {
+                  taskName,
+                  taskTime,
+                  desc,
+                  location,
+                  garden,
+                  username,
+                } = doc.data()
+                list.push({ 
+                    id: doc.id,
+                    taskName,
+                    taskTime,
+                    location,
+                    desc,
+                    garden,
+                    username,
+                })
+            });
+            updateTaskList(list)
 
-                if(loading) {
-                    setLoading(false)
-                }
-
-                // console.log('posts: ', list)
-            } catch(e) {
-                console.log(e)
+            if(loading) {
+                setLoading(false)
             }
+
+            // console.log('posts: ', list)
+        } catch(e) {
+            console.log(e)
         }
+    }
 
-        getTaskList()
-
-    //}, [])
+    useEffect(() => {
+      getTaskList();
+    }, [])
 
   //modal functionality
   const [newTaskVisible, setNewTaskVisible] = useState(false);
@@ -77,15 +76,14 @@ export default function Login() {
   const onRefresh = () => {
     setRefreshing(true);
     // Fetch new data from your API
-    getTaskList()
+    getTaskList();
     setRefreshing(false);
-  }
+  };
 
   return (
     <View style={styles.container}>
-      <View style={{width:'80%'}}>
+      <View style={{width: '90%'}}>
       <FlatList
-          style={{width: '90%'}}
           data={taskList}
           renderItem={({item}: {item: TaskData}) => {
               // console.log(item)

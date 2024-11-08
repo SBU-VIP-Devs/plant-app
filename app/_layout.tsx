@@ -15,6 +15,7 @@ import { FIREBASE_AUTH } from '../firebaseconfig';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Config from 'react-native-config';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -26,8 +27,8 @@ export default function RootLayout() {
 
   //for google auth sign in
   const [request, response, promptAsync] = Google.useAuthRequest({
-    iosClientId: "", //insert ios client id here
-    androidClientId: "" //insert android client id here
+    iosClientId: Config.IOS_CLIENT_ID, //insert ios client id here
+    androidClientId: Config.ANDROID_CLIENT_ID //insert android client id here
     });
 
 

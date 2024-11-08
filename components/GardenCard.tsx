@@ -7,7 +7,8 @@ interface GardenCardProps {
     item: GardenData
 }
 
-export default function GardenCard({item}: GardenCardProps) {
+export default function 
+({item}: GardenCardProps) {
     
     const user = FIREBASE_AUTH.currentUser;
     const username = user?.displayName ? user?.displayName : 'Unknown User'
