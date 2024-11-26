@@ -9,29 +9,9 @@ import NewGarden from '../inputscreens/newgarden';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FIRESTORE_DB } from '../../firebaseconfig';
 import { QuerySnapshot, collection, getDocs } from "firebase/firestore";
-
-// export const gardenList = [
-//     {
-//         id: '1',
-//         name: 'SBU Community Garden',
-//         admin: 'Mr. Leaf',
-//         adminImg: require('../../assets/icons/icon1.png'),
-//         desc: 'Dedicated to making Stony Brook University a greener place!',
-//         gardenImg: require('../../assets/gardens/garden2.jpeg'),
-//         numMembers: 1,
-//         isJoined: true
-//     },
-//     {
-//         id: '2',
-//         name: 'Gardening Club',
-//         admin: 'Ms. Petal',
-//         adminImg: require('../../assets/icons/icon2.png'),
-//         desc: 'Made by gardeners, for gardeners!',
-//         gardenImg: null,
-//         numMembers: 32,
-//         isJoined: false
-//     }
-// ]
+import { FIREBASE_AUTH } from '../../firebaseconfig';
+import GardenSettings from '../inputscreens/gardensettings';
+import GardenDetails from '../inputscreens/gardendetails';
 
 export interface GardenData {
     id: string;
@@ -46,6 +26,13 @@ export interface GardenData {
 };
 
 export default function Gardens() {
+    
+    //USER DATA
+    const user = FIREBASE_AUTH.currentUser;
+    const username = user?.displayName ? user?.displayName : 'Unknown User'
+    const userId = user ? user.uid : null
+
+    //GARDEN LIST READ
     const [gardenList, updateGardenList] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -87,10 +74,8 @@ export default function Gardens() {
         getGardenList();
     }, [])
 
-    const [newGardenVisible, setNewGardenVisible] = useState(false);
-    const show = () => setNewGardenVisible(true);
-    const hide = () => setNewGardenVisible(false);
-
+    
+    //REFRESHING GARDEN LIST
     const [refreshing, setRefreshing] = useState(false);
 
     const onRefresh = () => {
@@ -100,13 +85,63 @@ export default function Gardens() {
         setRefreshing(false);
     };
 
+    //CREATE NEW GARDEN MODAL
+    const [newGardenVisible, setNewGardenVisible] = useState(false);
+    const showNewGarden = () => setNewGardenVisible(true);
+    const hideNewGarden = () => setNewGardenVisible(false);
+
+    //RECOGNIZE CURRENT GARDEN ID
+    const [selectedGardenId, setSelectedGardenId] = useState<string | null>(null);
+
+    //OPEN SETTINGS MODAL
+    const [gardenSettingsVisible, setGardenSettingsVisible] = useState(false);
+    
+    const handleOpenSettings = (gardenId: string): void => {
+        setSelectedGardenId(gardenId);
+        setGardenSettingsVisible(true);
+      };
+    
+    const handleCloseSettings = (): void => {
+        setGardenSettingsVisible(false);
+        setSelectedGardenId(null);
+    };
+    
+    //OPEN DETAILS + AVAILABLE TASKS MODAL
+    const [gardenDetailsVisible, setGardenDetailsVisible] = useState(false);
+    
+    const handleOpenDetails = (gardenId: string): void => {
+        setSelectedGardenId(gardenId);
+        setGardenDetailsVisible(true);
+      };
+    
+      const handleCloseDetails = (): void => {
+        setGardenDetailsVisible(false);
+        setSelectedGardenId(null);
+      };
+
     return (
         <View style={styles.container}>
             <FlatList
                 style={{width: '90%'}}
                 data={gardenList}
                 renderItem={({item}: {item: GardenData}) => {
-                    return <GardenCard item={item} key={item.id}/>
+                    return (
+                        <View style={styles.cardContainer}>
+                            <GardenCard item={item} key={item.id}/>
+                            {(userId?item.roles[userId]==="admin":false) &&
+                            <View style={{alignItems: 'center'}}>
+                                <Pressable style={styles.leaveButton} onPress={() => handleOpenSettings(item.id)}>
+                                    <Text style={styles.lightTitle}>Garden Settings</Text>
+                                </Pressable> 
+                            </View>}
+                            <View style={{alignItems: 'center'}}>
+                                <Pressable style={styles.leaveButton} onPress={() => handleOpenDetails(item.id)}>
+                                    {/* <Text style={styles.lightTitle}>Garden Details {item.id}</Text> */}
+                                    <Text style={styles.lightTitle}>Garden Details</Text>
+                                </Pressable> 
+                            </View>
+                        </View>
+                    )
                 }}
                 keyExtractor={item => item.id}
                 showsVerticalScrollIndicator={false}
@@ -115,30 +150,78 @@ export default function Gardens() {
                     onRefresh={onRefresh}
                 />}
             />
-            <Button title='New Garden +' onPress={show} />
-            {/* <Button title='gardenlist' onPress={getGardenList} /> */}
+            <Button title='New Garden +' onPress={showNewGarden} />
+            {/* NEW GARDEN MODAL */}
             <Modal
                 visible={newGardenVisible}
-                onRequestClose={hide}
+                onRequestClose={hideNewGarden}
                 animationType='slide'
             >
                 <View style={{ flex: 1, marginTop: 50}}>
-                    <Button title='Close' onPress={hide} />
+                    <Button title='Close' onPress={hideNewGarden} />
                     <NewGarden/>
                 </View>
             </Modal>
-            {/* <Link href="../inputscreens/newgarden">new garden +</Link> */}
+            {/* GARDEN SETTINGS MODAL */}
+            <Modal
+                visible={gardenSettingsVisible}
+                onRequestClose={handleCloseSettings}
+                animationType='slide'
+            >
+                <View style={{ flex: 1, marginTop: 50 }}>
+                    <Button title='Close' onPress={handleCloseSettings} />
+                    <GardenSettings gardenId={selectedGardenId}/>
+                </View>
+            </Modal>
+            {/* GARDEN DETAILS MODAL */}
+            <Modal
+                visible={gardenDetailsVisible}
+                onRequestClose={handleCloseDetails}
+                animationType='slide'
+            >
+                <View style={{ flex: 1, marginTop: 50 }}>
+                    <Button title='Close' onPress={handleCloseDetails} />
+                    <GardenDetails gardenId={selectedGardenId}/>
+                </View>
+            </Modal>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  
+    container: {
     flexDirection: 'column',
     justifyContent: 'flex-start',
     paddingTop: 20,
     alignItems: 'center',
     flex: 1,
     backgroundColor: '#cad2c5',
-  },
+    },
+    cardContainer: {
+        flexDirection: 'column',
+        justifyContent: 'flex-start',
+        backgroundColor: '#84a98c',
+        width: '100%',
+        borderRadius: 10,
+        marginBottom: 20,
+    },
+    leaveButton: {
+        alignItems: 'center',
+        borderRadius: 30,
+        backgroundColor: '#52796f',
+        width: '50%',
+        padding: 8,
+        margin: 8,
+    },
+    lightTitle: {
+        fontFamily: 'Quicksand-Bold',
+        color: '#2f3e46',
+        fontSize: 17,
+    },
+    lightSubtitle: {
+        fontFamily: 'Quicksand-Regular',
+        color: '#2f3e46',
+        fontSize: 13,
+    },
 });

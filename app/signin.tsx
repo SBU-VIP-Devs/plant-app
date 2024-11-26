@@ -44,7 +44,7 @@ export default function SignIn({ promptAsync }: { promptAsync: any }) {
     <View style={styles.container}>
       <KeyboardAvoidingView behavior='padding'>
       <Text style={styles.header}>Welcome to the Plant App!</Text>
-      <Text style={styles.text}>(inset cool image)</Text>
+      <Text style={styles.text}>Sign in to get started.</Text>
       
       <TextInput
         value={email}
