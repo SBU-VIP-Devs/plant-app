@@ -98,8 +98,8 @@ export default function NewTask({ gardenId }: NewTaskProps) {
 
     //the function activated by the button that accepts user input
     const uploadTaskPost = async () => {
-        const uidAssigned: string[] = ["\0"];
-        const uidRequests: string[] = ["\0"];
+        const uidAssigned: string[] = [];
+        const uidRequests: string[] = [];
         gardenId?
         (await uploadTaskRecord(
           name, 

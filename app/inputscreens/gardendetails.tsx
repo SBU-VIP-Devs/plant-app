@@ -18,13 +18,14 @@ interface GardenSettingsProps {
 export default function GardenDetails({ gardenId }: GardenSettingsProps) {
 
   return (
-    <>
     <View style={styles.container}>
       <Text>Garden Details</Text>
       <Text>Selected Garden: {gardenId}</Text>
+      <View style={{marginBottom: 60}}>
+        <SignUpList gardenId={gardenId}/>
+      </View>
     </View>
-    <SignUpList gardenId={gardenId}/>
-    </>
+      
   );
 }
 
@@ -35,5 +36,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     backgroundColor: '#cad2c5',
     padding: 20,
+    width: '100%',
+    height: '100%'
   },
 });

@@ -91,31 +91,30 @@ export default function TaskList({ gardenId }: TaskListProps) {
 
   const onRefresh = () => {
     setRefreshing(true);
-    // Fetch new data from your API
     getTaskList();
     setRefreshing(false);
   };
 
   return ( 
-    <View style={styles.container}>
+    <View style={{alignItems: 'center'}}>
       <View style={{width: '90%'}}>
-      {taskList? 
-        <FlatList
-          data={taskList}
-          renderItem={({item}: {item: TaskData}) => {
-              return <TaskCard item={item} key={item.id}/>
-          }}
-          keyExtractor={item => item.id}
-          showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            />}
-        />:
-        <Text>No tasks! Click the button below to create one.</Text>
-      }
+        {taskList? 
+          <FlatList
+            data={taskList}
+            renderItem={({item}: {item: TaskData}) => {
+                return <TaskCard item={item} key={item.id}/>
+            }}
+            keyExtractor={item => item.id}
+            showsVerticalScrollIndicator={false}
+            refreshControl={<RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              />}
+          />:
+          <Text>No tasks! Click the button below to create one.</Text>
+        }
       </View>
-      <Button title='New Task +' onPress={show} />
+      <Button title='New Task +' onPress={show}/>
             {/* <Button title='gardenlist' onPress={getGardenList} /> */}
             <Modal
                 visible={newTaskVisible}

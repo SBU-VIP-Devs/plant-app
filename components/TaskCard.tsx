@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react'
-import { Button, View, StyleSheet, Text, Image, Pressable } from 'react-native';
+import { Button, View, StyleSheet, Text, Image, Pressable, Dimensions } from 'react-native';
 import { GardenData } from '../app/(tabs)/gardens';
-import { FIREBASE_AUTH } from '../firebaseconfig';
+import { FIREBASE_AUTH, FIRESTORE_DB } from '../firebaseconfig';
 import { TaskData } from '../app/inputscreens/gardentasklist';
 import { formatDateRange } from '../app/inputscreens/newtask';
+import { doc, getDoc } from "firebase/firestore";
+import { useState } from 'react';
 
 interface TaskCardProps {
     item: TaskData
@@ -22,6 +24,42 @@ export default function TaskCard({item}: TaskCardProps) {
         return formatDateRange(date1, date2)
     }
 
+    const [requestNameList, setRequestNameList] = useState<string>("No one has requested this task.");
+    const [assignedNameList, setAssignedNameList] = useState<string>("No one has been assigned to this task.");
+
+
+    async function readNamesAsString(uids: (string | undefined)[]): Promise<string> {
+        try {
+          const namePromises = uids.map(async (uid) => {
+            if (!uid) return "No Name";
+            const docRef = doc(FIRESTORE_DB, `users/${uid}`);
+            const docSnap = await getDoc(docRef);
+            const data = docSnap.data();
+            return data?.username || "No Name";
+          });
+      
+          const names = await Promise.all(namePromises);
+          return names.join(", "); // Join usernames into a single string
+        } catch (e) {
+          console.log(e);
+          return "Error fetching names";
+        }
+      }
+
+      useEffect(() => {
+        const uidsRequests = item.uidRequests; 
+        const uidsAssigned = item.uidAssigned; 
+        const fetchNames = async () => {
+          const namesR = await readNamesAsString(uidsRequests);
+          const namesA = await readNamesAsString(uidsAssigned);
+          setRequestNameList(namesR);
+          setAssignedNameList(namesA);
+        };
+        fetchNames();
+      }, []);
+
+    
+
     return (
         <View style={styles.container}>
             <View style={styles.header}>
@@ -31,21 +69,25 @@ export default function TaskCard({item}: TaskCardProps) {
                     <Text style={styles.darkSubtitle}>{stringtoDates(item.taskTime)}</Text>
                     <Text style={styles.darkSubtitle}>{item.desc}</Text>
                     <Text style={styles.darkSubtitle}>{item.location}</Text>
+                    <Text style={styles.darkTitle}>Assigned to: </Text>
                     <View style={styles.assignedUser}>
                         {item.uidAssigned[0]==="\0"?
                         <Text style={styles.darkSubtitle}>No one has been assigned to this task.</Text>:
-                        <Text style={styles.darkSubtitle}>{item.uidAssigned[0]}</Text>}
+                        <Text style={styles.darkSubtitle}>{assignedNameList}</Text>}
                     </View> 
+                    <Text style={styles.darkTitle}>Requested by: </Text>
                     <View style={styles.assignedUser}>
-                        {item.uidAssigned[0]==="\0"?
+                        {item.uidRequests[0]==="\0"?
                         <Text style={styles.darkSubtitle}>No one has requested this task.</Text>:
-                        <Text style={styles.darkSubtitle}>{item.uidRequests[0]}</Text>}
+                        <Text style={styles.darkSubtitle}>{requestNameList}</Text>}
                     </View> 
                 </View>
             </View>
         </View>
     )
 }
+
+const screenWidth = Dimensions.get('window').width;
 
 const styles = StyleSheet.create({
     container: {
@@ -56,6 +98,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         paddingTop: 10,
         paddingBottom: 10,
+        // width: screenWidth * 0.8
     },
     darkSubtitle: {
         fontFamily: 'Quicksand-Regular',
@@ -83,6 +126,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#52796f',
         padding: 8,
         margin: 8,
+        width: '90%'
     },
     requestUser: {
         alignItems: 'center',

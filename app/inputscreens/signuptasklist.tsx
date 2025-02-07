@@ -1,12 +1,12 @@
 import 'react-native-gesture-handler';
 import 'expo-dev-client';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Pressable, Text, View, Button, FlatList, Modal, RefreshControl } from 'react-native';
+import { StyleSheet, Pressable, Text, View, Button, FlatList, Modal, RefreshControl, Alert } from 'react-native';
 import { useState, useEffect } from 'react';
 import { DataTable } from 'react-native-paper';
 import TaskCard from '../../components/TaskCard'
-import { QuerySnapshot, collection, getDocs } from "firebase/firestore";
-import { FIRESTORE_DB } from '../../firebaseconfig';
+import { QuerySnapshot, collection, getDocs, doc, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
+import { FIRESTORE_DB, FIREBASE_AUTH } from '../../firebaseconfig';
 import NewTask from '../inputscreens/newtask';
 import { TaskData } from './gardentasklist';
 
@@ -16,6 +16,9 @@ interface TaskListProps {
 
 export default function SignUpList({ gardenId }: TaskListProps) {
   
+    //firebase auth user
+    const user = FIREBASE_AUTH.currentUser;
+
     //local list to display the task data
     const [taskList, updateTaskList] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -80,8 +83,35 @@ export default function SignUpList({ gardenId }: TaskListProps) {
     setRefreshing(false);
   };
 
+  //uploads to firebase and refresh
+  async function uploadTaskRequest(uid: string | undefined, taskId: string) {
+    try {
+      const docRef = doc(FIRESTORE_DB, `garden-post-info/${gardenId}/garden-tasks/${taskId}`)
+      
+      const docSnap = await getDoc(docRef);
+      const data = docSnap.data();
+      const currentRequests = data?.uidRequests;
+      if(currentRequests[0] === "\0") {
+        await updateDoc(docRef, {
+          uidRequests: [uid],
+        });
+      } else {
+        await updateDoc(docRef, {
+          uidRequests: arrayUnion(uid),
+        });
+      }
+      
+      console.log('User saved to requests array correctly.', docRef.id)
+      Alert.alert('Task requested successfully!')
+    } catch(e) {
+      console.log(e)
+      console.log("may be invalid user.")
+    }
+    onRefresh()
+  }
+
   return (
-    <View style={styles.container}>
+    <View style={{alignItems: 'center'}}>
       <View style={{width: '90%'}}>
       {taskList? 
         <FlatList
@@ -91,7 +121,7 @@ export default function SignUpList({ gardenId }: TaskListProps) {
                 <View style={styles.cardContainer}>
                     <TaskCard item={item} key={item.id}/>
                     <View style={{alignItems: 'center'}}>
-                        <Pressable style={styles.button} onPress={() => console.log("sign up button")}>
+                        <Pressable style={styles.button} onPress={() => uploadTaskRequest(user?.uid, item.id)}>
                             <Text style={styles.lightTitle}>Request This Task</Text>
                         </Pressable> 
                     </View>
@@ -115,7 +145,7 @@ export default function SignUpList({ gardenId }: TaskListProps) {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'column',
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
     paddingTop: 20,
     alignItems: 'center',
     flex: 1,
@@ -123,7 +153,7 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     flexDirection: 'column',
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
     backgroundColor: '#84a98c',
     borderRadius: 10,
     marginBottom: 20,

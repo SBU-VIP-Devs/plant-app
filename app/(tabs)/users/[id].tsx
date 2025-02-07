@@ -13,6 +13,7 @@ export default function Users() {
   //gets number passed into path for [id] 
   const {id} = useLocalSearchParams();
 
+  
 
   //if you want id as a string
   //const {id} = useLocalSearchParams<{id: string}>();

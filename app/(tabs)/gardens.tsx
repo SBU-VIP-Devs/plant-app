@@ -64,7 +64,7 @@ export default function Gardens() {
                 setLoading(false)
             }
 
-            console.log('posts: ', list)
+            // console.log('posts: ', list)
         } catch(e) {
             console.log(e)
         }
