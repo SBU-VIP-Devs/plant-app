@@ -4,14 +4,15 @@ An app designed for gardening groups to delegate tasks and keep track of volunte
 This project is currently being worked on by Jamie Calub, Hannah Ninan, Susan Qu, and Jasmine Ngo 
 in collaboration with the Stony Brook Community Garden. 
 
+UPDATE: Jillian Tan, Abigail Huang, and Amaresh Padala have joined the team! :)
+
 ## Demo
 Here are the current functionalities:
 - Google sign-in + Email sign-in
-- Upload garden posts
-- If one is the creator of a garden, they can upload tasks within that 
-garden under "Garden Settings" and non-admin can view and sign up for tasks
-under "Garden Details"
-- Profile screen design
+- Upload garden posts for anyone to join
+- Conditional rendering of available settings based on "admin" or "member" status (in Firebase)
+- Ability for members to apply for posted tasks, and admin to accept such tasks
+- Profile screen design, reads from Firebase
   
 <img width="300" alt="GardenPosts" src="https://github.com/user-attachments/assets/85783346-952f-425b-ad8a-d45a72a11c7a">
 <img width="300" alt="NewGarden" src="https://github.com/user-attachments/assets/747bf56d-cb66-4298-8150-0e6ea58ecd2b">
