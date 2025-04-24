@@ -34,10 +34,9 @@ install! 'cocoapods',
 
 prepare_react_native_project!
 
-target 'plantapp' do
+target 'sprout' do
   use_expo_modules!
   config = use_native_modules!
-
 
   pod 'Firebase', :modular_headers => true
   pod 'FirebaseCoreInternal', :modular_headers => true

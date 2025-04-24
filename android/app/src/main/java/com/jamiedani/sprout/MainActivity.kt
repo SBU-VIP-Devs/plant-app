@@ -1,4 +1,4 @@
-package com.jamiedani.plantapp
+package com.jamiedani.sprout
 
 import android.os.Build
 import android.os.Bundle
