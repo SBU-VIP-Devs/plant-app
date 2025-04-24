@@ -4,11 +4,11 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, Button, Image, FlatList} from 'react-native';
 import { Link } from '@react-navigation/native';
 import { useLocalSearchParams } from 'expo-router';
-import { FIREBASE_AUTH } from '../../../firebaseconfig';
+import { FIREBASE_AUTH } from '../../firebaseconfig';
 import { signOut } from 'firebase/auth';
 
 
-export default function Users() {
+export default function User() {
 
   //gets number passed into path for [id] 
   const {id} = useLocalSearchParams();
@@ -31,7 +31,7 @@ export default function Users() {
   return (
     <View style={styles.container}>
       <View style={{alignItems: 'center'}}>
-        <Image source={require('../../../assets/flower.jpg')} style={styles.profilepic}/>
+        <Image source={require('../../assets/flower.jpg')} style={styles.profilepic}/>
         <Text style={styles.name}>FirstName LastName</Text>
         <Text style={styles.email}>{user?.email}</Text>
       </View>

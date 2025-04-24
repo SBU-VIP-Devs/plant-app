@@ -35,7 +35,7 @@ export default function TabsLayout() {
             }}
         />
         <Tabs.Screen 
-            name = "users/[id]"
+            name = "user"
             options = {{
                 headerShown: false,
                 headerTitle: "User",

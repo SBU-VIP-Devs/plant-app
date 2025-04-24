@@ -13,7 +13,7 @@ import Config from 'react-native-config';
 const firebaseConfig = {
   apiKey: Config.FIREBASE_API_KEY,
   authDomain: Config.FIREBASE_AUTH_DOMAIN,
-  projectId: Config.FIREBASE_PROJECT_ID,
+  projectId: Config.FIREBASE_STORAGE_BUCKET,
   storageBucket: Config.FIREBASE_STORAGE_BUCKET,
   messagingSenderId: Config.FIREBASE_MESSAGING,
   appId: Config.FIREBASE_APP_ID

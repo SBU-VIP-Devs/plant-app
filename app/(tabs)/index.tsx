@@ -13,7 +13,7 @@ export default function Login() {
   
   return (
     <View style={styles.container}>
-      <Text>login screen!</Text>
+      <Text>login screen! hello</Text>
     </View>
   );
 }
