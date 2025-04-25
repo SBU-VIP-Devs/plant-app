@@ -29,7 +29,7 @@ export default function RootLayout() {
   //for google auth sign in
   const [request, response, promptAsync] = Google.useAuthRequest({
     iosClientId: Constants.expoConfig.extra.IOS_CLIENT_ID, //insert ios client id here
-    androidClientId: Constants.expoConfig.extra.ANDROID_CLIENT_ID //insert android client id herekeytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android
+    androidClientId: Constants.expoConfig.extra.ANDROID_CLIENT_ID, //insert android client id here
 
     });
 
