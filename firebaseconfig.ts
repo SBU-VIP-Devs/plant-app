@@ -17,7 +17,7 @@ const {
   FIREBASE_STORAGE_BUCKET,
   FIREBASE_MESSAGING,
   FIREBASE_APP_ID,
-} = Constants.expoConfig.extra as {
+} = Constants?.expoConfig?.extra as {
   FIREBASE_API_KEY: string;
   FIREBASE_AUTH_DOMAIN: string;
   FIREBASE_PROJECT_ID: string;
