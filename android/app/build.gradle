@@ -109,9 +109,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.jamiedani.plantapp'
+    namespace 'com.jamiedani.sprout'
     defaultConfig {
-        applicationId 'com.jamiedani.plantapp'
+        applicationId 'com.jamiedani.sprout'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

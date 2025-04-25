@@ -8,7 +8,8 @@
     <intent>
       <action android:name="android.intent.action.VIEW"/>
       <category android:name="android.intent.category.BROWSABLE"/>
-      <data android:scheme="https"/>
+      <data android:scheme="com.googleusercontent.apps.411580564438-250phtqj3avtiv5o7u4sa7m8lbofauf7"
+          android:path="/oauth2redirect" />
     </intent>
   </queries>
   <application android:name=".MainApplication" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="true" android:theme="@style/AppTheme">
@@ -24,9 +25,9 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="plant-app"/>
-        <data android:scheme="com.jamiedani.plantapp"/>
-        <data android:scheme="exp+plant-app"/>
+        <data android:scheme="sprout"/>
+        <data android:scheme="com.jamiedani.sprout"/>
+        <data android:scheme="exp+sprout"/>
       </intent-filter>
     </activity>
     <activity android:name="com.facebook.react.devsupport.DevSettingsActivity" android:exported="false"/>

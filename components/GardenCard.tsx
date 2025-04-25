@@ -27,7 +27,7 @@ export default function
     // }
 
     return (
-        <View style={styles.container}>
+        <>
             <View style={styles.header}>
                 <Image 
                     style={styles.adminIcon} 
@@ -49,7 +49,7 @@ export default function
             /> :
             <View style={{borderWidth: 0.5, borderColor: '#2f3e46', marginLeft: 15, marginRight: 15}}/>
             }
-            <View style={{ alignItems: 'center', padding: 15, flexDirection: 'row'}}>
+            {/* <View style={{ alignItems: 'center', padding: 15, flexDirection: 'row'}}>
                 {!item.joined ? 
                     <Pressable style={styles.joinButton} onPress={() => console.log('join garden')}>
                         <Text style={styles.darkTitle}>Join Garden</Text>
@@ -60,12 +60,13 @@ export default function
                         <Text style={styles.lightSubtitle}>{memberText}</Text>
                     </Pressable>
                 }
-                {(userId?item.roles[userId]==="admin":false) ? <Pressable style={styles.leaveButton} onPress={() => console.log('delete garden')}>
+                {(userId?item.roles[userId]==="admin":false) ? 
+                <Pressable style={styles.leaveButton} onPress={() => console.log('open modal of settings')}>
                     <Text style={styles.lightTitle}>Garden Settings</Text>
                     <Text style={styles.lightSubtitle}>delete garden</Text>
                 </Pressable> : null}
-            </View>
-        </View>
+            </View> */}
+        </>
     )
 }
 

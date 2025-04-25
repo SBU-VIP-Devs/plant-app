@@ -37,8 +37,13 @@ export function formatDateRange(date1: Date, date2: Date) {
       return `${startDay} at ${startTime} - ${endDay} at ${endTime}`;
   }
 }
+//collection(FIRESTORE_DB, `garden-post-info/${gardenId}/garden-tasks`)
 
-export default function NewTask() {
+interface NewTaskProps {
+  gardenId: string | null;  
+}
+
+export default function NewTask({ gardenId }: NewTaskProps) {
 
     const user = FIREBASE_AUTH.currentUser;
     const username = user?.displayName ? user?.displayName : 'Unknown User'
@@ -70,18 +75,19 @@ export default function NewTask() {
     const [desc, setDesc] = useState('Insert description...')
     //whats enum in typescript
     const [location, setLocation] = useState('Location')
-    //retrieve the gardens you have admin access to and only allow to select those
-    const [garden, setGarden] = useState('GardenID')
     
-    async function uploadTaskRecord(taskName: string, taskTime: string, desc: string, location: string, gardenId: string, username: string) {
+    //uploads to firebase
+    async function uploadTaskRecord(taskName: string, taskTime: string, desc: string, location: string, gardenId: string, uidAssigned: string[], uidRequests: string[], username: string) {
       try {
-        const docRef = await addDoc(collection(FIRESTORE_DB, 'task-post-info'), {
+        const docRef = await addDoc(collection(FIRESTORE_DB, `garden-post-info/${gardenId}/garden-tasks`), {
           taskName,
           taskTime,
           desc,
           location,
-          garden,
+          gardenId,
           username,
+          uidAssigned,
+          uidRequests
         })
         console.log('Document saved correctly.', docRef.id)
         Alert.alert('Task created successfully!')
@@ -90,11 +96,23 @@ export default function NewTask() {
       }
     }
 
+    //the function activated by the button that accepts user input
     const uploadTaskPost = async () => {
-        await uploadTaskRecord(name, `${selectedTime1} ${selectedTime2}`, desc, location, garden, username)
+        const uidAssigned: string[] = [];
+        const uidRequests: string[] = [];
+        gardenId?
+        (await uploadTaskRecord(
+          name, 
+          `${selectedTime1} ${selectedTime2}`, 
+          desc, 
+          location, 
+          gardenId,
+          uidAssigned,
+          uidRequests, 
+          username
+        )):
+        console.log("Invalid garden.")
     }
-
-
 
     return (
       <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -158,19 +176,7 @@ export default function NewTask() {
           setLocation(text)
         }}
         />
-        <Text style={styles.text}>New Task Garden</Text>
-        <TextInput
-        value={garden}
-        style={styles.input}
-        placeholder="Task Garden"
-        autoCapitalize='none'
-        multiline={true}
-        numberOfLines={5}
-        maxLength={300}
-        onChangeText={(text) => {
-          setGarden(text)
-        }}
-        />
+        
         <StatusBar style="auto" />
         <View style={{alignItems: 'center'}}>
           <Pressable style={styles.button} onPress = {uploadTaskPost}>

@@ -8,13 +8,24 @@ import TaskCard from '../../components/TaskCard'
 import { QuerySnapshot, collection, getDocs } from "firebase/firestore";
 import { FIRESTORE_DB } from '../../firebaseconfig';
 import NewTask from '../inputscreens/newtask';
+import TaskList from './gardentasklist';
+import SignUpList from './signuptasklist';
 
-export default function Login() {
-  
+interface GardenSettingsProps {
+    gardenId: string | null;  
+}
+
+export default function GardenDetails({ gardenId }: GardenSettingsProps) {
+
   return (
     <View style={styles.container}>
-      <Text>login screen! hello</Text>
+      <Text>Garden Details</Text>
+      <Text>Selected Garden: {gardenId}</Text>
+      <View style={{marginBottom: 60}}>
+        <SignUpList gardenId={gardenId}/>
+      </View>
     </View>
+      
   );
 }
 
@@ -23,8 +34,9 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'flex-start',
     paddingTop: 20,
-    alignItems: 'center',
-    flex: 1,
     backgroundColor: '#cad2c5',
+    padding: 20,
+    width: '100%',
+    height: '100%'
   },
 });

@@ -44,7 +44,7 @@ if (getRNMinorVersion() >= 75) {
   }
 }
 
-rootProject.name = 'plant-app'
+rootProject.name = 'sprout'
 
 dependencyResolutionManagement {
   versionCatalogs {

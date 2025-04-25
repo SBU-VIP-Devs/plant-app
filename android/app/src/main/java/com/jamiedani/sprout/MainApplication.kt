@@ -1,4 +1,4 @@
-package com.jamiedani.plantapp
+package com.jamiedani.sprout
 
 import android.app.Application
 import android.content.res.Configuration

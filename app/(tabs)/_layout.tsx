@@ -35,7 +35,7 @@ export default function TabsLayout() {
             }}
         />
         <Tabs.Screen 
-            name = "users/[id]"
+            name = "user"
             options = {{
                 headerShown: false,
                 headerTitle: "User",
@@ -43,6 +43,17 @@ export default function TabsLayout() {
                     backgroundColor: "#84a98c"
                 },
                 title: "User"
+            }}
+        />
+        <Tabs.Screen 
+            name = "test"
+            options = {{
+                headerShown: false,
+                headerTitle: "Test",
+                headerStyle: {
+                    backgroundColor: "#84a98c"
+                },
+                title: "Test"
             }}
         />
     </Tabs>
