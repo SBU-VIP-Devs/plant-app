@@ -10,7 +10,7 @@ import TaskRequestCard from '../../components/TaskRequestCard';
 
 // for ONE garden...need to scan thru all the tasks and get all the uid requests
 
-export default function TaskRequests({ gardenId }: GardenSettingsProps) {
+export default function TaskRequests({ gardenId, onRefresh }: GardenSettingsProps & { onRefresh?: () => void }) {
 
 
   // TO CONVERT UID TO ACTUAL USERNAMES (in case they change their usernames)
@@ -74,13 +74,12 @@ export default function TaskRequests({ gardenId }: GardenSettingsProps) {
     fetchTaskRequests();
   }, []);
 
-  const [refreshing, setRefreshing] = useState(false);
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    // Fetch new data from your API
+  // Refresh function that can be called from parent
+  const refreshTaskRequests = () => {
     fetchTaskRequests();
-    setRefreshing(false);
+    if (onRefresh) {
+      onRefresh();
+    }
   };
 
   //REMOVE UID FROM REQUEST LIST
@@ -107,7 +106,7 @@ export default function TaskRequests({ gardenId }: GardenSettingsProps) {
       console.log(e)
       console.log("may be invalid user.")
     }
-    onRefresh()
+    refreshTaskRequests()
   }
 
 
@@ -135,7 +134,7 @@ export default function TaskRequests({ gardenId }: GardenSettingsProps) {
         console.log(e)
         console.log("may be invalid user.")
       }
-      onRefresh()
+      refreshTaskRequests()
     }
 
 
@@ -143,17 +142,10 @@ export default function TaskRequests({ gardenId }: GardenSettingsProps) {
     <FlatList
       data={taskRequests}
       renderItem={({item}: {item: TaskRequestProps}) => (
-        <View style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            backgroundColor: '#84a98c',
-            marginTop: 20,
-            padding: 17,
-            borderRadius: 15,
-        }}>
-            
+        <View style={styles.requestCardContainer}>
+          <View style={styles.requestCard}>
             <TaskRequestCard id={item.id} requesterName={item.requesterName} requesterId={item.requesterId} taskTime={item.taskTime} taskName={item.taskName} taskId={item.taskId}/>
-            <View>  
+            <View style={styles.buttonContainer}>  
                 <Pressable style={styles.button} onPress={async () => {
                   await removeFromRequested(item.requesterId, item.taskId);
                   await addToAssigned(item.requesterId, item.taskId);
@@ -168,16 +160,13 @@ export default function TaskRequests({ gardenId }: GardenSettingsProps) {
                     <Text style={styles.darkSubtitle}>Deny</Text>
                 </Pressable>
             </View> 
+          </View>
         </View>
       )}
       keyExtractor={item => item.id}
+      horizontal={true}
       showsHorizontalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-        />
-      }
+      contentContainerStyle={styles.horizontalList}
     />
   );
 }
@@ -193,6 +182,25 @@ const styles = StyleSheet.create({
         paddingBottom: 10,
         
     },
+    horizontalList: {
+        paddingHorizontal: 10,
+    },
+    requestCardContainer: {
+        marginRight: 15,
+        width: 300,
+    },
+    requestCard: {
+        flexDirection: 'column',
+        backgroundColor: '#84a98c',
+        padding: 17,
+        borderRadius: 15,
+        minHeight: 120,
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginTop: 10,
+    },
     darkSubtitle: {
         fontFamily: 'Quicksand-Regular',
         color: '#2f3e46',
@@ -205,6 +213,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#52796f',
         width: 80,
         padding: 8,
-        margin: 8,
+        margin: 4,
     },
 })
