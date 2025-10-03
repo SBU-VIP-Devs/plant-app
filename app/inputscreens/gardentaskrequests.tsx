@@ -1,7 +1,7 @@
 import React from 'react';
 import { FlatList, Text, View, RefreshControl, Pressable, StyleSheet, Alert } from 'react-native';
 import { useState, useEffect, useId } from 'react';
-import { doc, getDoc, getDocs, collection, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
+import { doc, getDoc, getDocs, collection, updateDoc, arrayUnion, arrayRemove, setDoc, addDoc } from "firebase/firestore";
 import { FIRESTORE_DB } from '../../firebaseconfig';
 import { GardenSettingsProps } from './gardensettings';
 import { TaskRequestProps } from '../../components/TaskRequestCard';
@@ -137,6 +137,63 @@ export default function TaskRequests({ gardenId, onRefresh }: GardenSettingsProp
       refreshTaskRequests()
     }
 
+  async function addToUserTaskList(uid: string | undefined, taskId: string) {
+    try {
+      if (!uid) {
+        console.log("No user ID provided");
+        return;
+      }
+
+      // Get the task data from garden-tasks collection
+      const taskDocRef = doc(FIRESTORE_DB, `garden-post-info/${gardenId}/garden-tasks/${taskId}`);
+      const taskDocSnap = await getDoc(taskDocRef);
+      
+      if (!taskDocSnap.exists()) {
+        console.log("Task document does not exist");
+        return;
+      }
+
+      const taskData = taskDocSnap.data();
+      const { taskName, taskTime, desc, location, username } = taskData;
+
+      // Parse taskTime to get start and end times
+      const timeParts = taskTime.split(" ");
+      const taskStartTime = timeParts[0] || "";
+      const taskEndTime = timeParts[1] || "";
+
+      // Check if user document exists in user-task-info collection
+      const userDocRef = doc(FIRESTORE_DB, `user-task-info/${uid}`);
+      const userDocSnap = await getDoc(userDocRef);
+
+      // If user document doesn't exist, create it
+      if (!userDocSnap.exists()) {
+        await setDoc(userDocRef, {
+          userId: uid,
+          createdAt: new Date().toISOString()
+        });
+      }
+
+      // Create new task record in user-tasks subcollection
+      const userTaskData = {
+        gardenId: gardenId,
+        taskCreator: username || "",
+        taskDesc: desc || "",
+        taskEndTime: taskEndTime,
+        taskIsDone: false,
+        taskLocation: location || "",
+        taskName: taskName || "",
+        taskStartTime: taskStartTime,
+        uidAssigned: [uid]
+      };
+
+      await addDoc(collection(FIRESTORE_DB, `user-task-info/${uid}/user-tasks`), userTaskData);
+      
+      console.log('User task record created successfully');
+    } catch(e) {
+      console.log("Error creating user task record:", e);
+    }
+  }
+
 
   return (
     <FlatList
@@ -149,6 +206,7 @@ export default function TaskRequests({ gardenId, onRefresh }: GardenSettingsProp
                 <Pressable style={styles.button} onPress={async () => {
                   await removeFromRequested(item.requesterId, item.taskId);
                   await addToAssigned(item.requesterId, item.taskId);
+                  await addToUserTaskList(item.requesterId, item.taskId);
                   console.log('accepted users task request')
                 }}>
                     <Text style={styles.darkSubtitle}>Accept</Text>
