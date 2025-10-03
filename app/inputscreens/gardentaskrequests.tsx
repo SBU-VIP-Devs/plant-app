@@ -1,7 +1,7 @@
 import React from 'react';
 import { FlatList, Text, View, RefreshControl, Pressable, StyleSheet, Alert } from 'react-native';
 import { useState, useEffect, useId } from 'react';
-import { doc, getDoc, getDocs, collection, updateDoc, arrayUnion, arrayRemove, setDoc, addDoc } from "firebase/firestore";
+import { doc, getDoc, getDocs, collection, updateDoc, arrayUnion, arrayRemove, setDoc } from "firebase/firestore";
 import { FIRESTORE_DB } from '../../firebaseconfig';
 import { GardenSettingsProps } from './gardensettings';
 import { TaskRequestProps } from '../../components/TaskRequestCard';
@@ -175,6 +175,7 @@ export default function TaskRequests({ gardenId, onRefresh }: GardenSettingsProp
 
       // Create new task record in user-tasks subcollection
       const userTaskData = {
+        taskId: taskId,
         gardenId: gardenId,
         taskCreator: username || "",
         taskDesc: desc || "",
@@ -186,7 +187,9 @@ export default function TaskRequests({ gardenId, onRefresh }: GardenSettingsProp
         uidAssigned: [uid]
       };
 
-      await addDoc(collection(FIRESTORE_DB, `user-task-info/${uid}/user-tasks`), userTaskData);
+      // Write using the garden task's taskId as the document ID in user-tasks
+      const userTaskDocRef = doc(FIRESTORE_DB, `user-task-info/${uid}/user-tasks/${taskId}`);
+      await setDoc(userTaskDocRef, userTaskData);
       
       console.log('User task record created successfully');
     } catch(e) {
