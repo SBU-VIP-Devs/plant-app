@@ -1,7 +1,7 @@
 import React from 'react';
 import { FlatList, Text, View, RefreshControl, Pressable, StyleSheet, Alert } from 'react-native';
 import { useState, useEffect, useId } from 'react';
-import { doc, getDoc, getDocs, collection, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
+import { doc, getDoc, getDocs, collection, updateDoc, arrayUnion, arrayRemove, setDoc } from "firebase/firestore";
 import { FIRESTORE_DB } from '../../firebaseconfig';
 import { GardenSettingsProps } from './gardensettings';
 import { TaskRequestProps } from '../../components/TaskRequestCard';
@@ -10,7 +10,7 @@ import TaskRequestCard from '../../components/TaskRequestCard';
 
 // for ONE garden...need to scan thru all the tasks and get all the uid requests
 
-export default function TaskRequests({ gardenId }: GardenSettingsProps) {
+export default function TaskRequests({ gardenId, onRefresh }: GardenSettingsProps & { onRefresh?: () => void }) {
 
 
   // TO CONVERT UID TO ACTUAL USERNAMES (in case they change their usernames)
@@ -74,13 +74,12 @@ export default function TaskRequests({ gardenId }: GardenSettingsProps) {
     fetchTaskRequests();
   }, []);
 
-  const [refreshing, setRefreshing] = useState(false);
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    // Fetch new data from your API
+  // Refresh function that can be called from parent
+  const refreshTaskRequests = () => {
     fetchTaskRequests();
-    setRefreshing(false);
+    if (onRefresh) {
+      onRefresh();
+    }
   };
 
   //REMOVE UID FROM REQUEST LIST
@@ -107,7 +106,7 @@ export default function TaskRequests({ gardenId }: GardenSettingsProps) {
       console.log(e)
       console.log("may be invalid user.")
     }
-    onRefresh()
+    refreshTaskRequests()
   }
 
 
@@ -135,28 +134,82 @@ export default function TaskRequests({ gardenId }: GardenSettingsProps) {
         console.log(e)
         console.log("may be invalid user.")
       }
-      onRefresh()
+      refreshTaskRequests()
     }
+
+  async function addToUserTaskList(uid: string | undefined, taskId: string) {
+    try {
+      if (!uid) {
+        console.log("No user ID provided");
+        return;
+      }
+
+      // Get the task data from garden-tasks collection
+      const taskDocRef = doc(FIRESTORE_DB, `garden-post-info/${gardenId}/garden-tasks/${taskId}`);
+      const taskDocSnap = await getDoc(taskDocRef);
+      
+      if (!taskDocSnap.exists()) {
+        console.log("Task document does not exist");
+        return;
+      }
+
+      const taskData = taskDocSnap.data();
+      const { taskName, taskTime, desc, location, username } = taskData;
+
+      // Parse taskTime to get start and end times
+      const timeParts = taskTime.split(" ");
+      const taskStartTime = timeParts[0] || "";
+      const taskEndTime = timeParts[1] || "";
+
+      // Check if user document exists in user-task-info collection
+      const userDocRef = doc(FIRESTORE_DB, `user-task-info/${uid}`);
+      const userDocSnap = await getDoc(userDocRef);
+
+      // If user document doesn't exist, create it
+      if (!userDocSnap.exists()) {
+        await setDoc(userDocRef, {
+          userId: uid,
+          createdAt: new Date().toISOString()
+        });
+      }
+
+      // Create new task record in user-tasks subcollection
+      const userTaskData = {
+        taskId: taskId,
+        gardenId: gardenId,
+        taskCreator: username || "",
+        taskDesc: desc || "",
+        taskEndTime: taskEndTime,
+        taskIsDone: false,
+        taskLocation: location || "",
+        taskName: taskName || "",
+        taskStartTime: taskStartTime,
+        uidAssigned: [uid]
+      };
+
+      // Write using the garden task's taskId as the document ID in user-tasks
+      const userTaskDocRef = doc(FIRESTORE_DB, `user-task-info/${uid}/user-tasks/${taskId}`);
+      await setDoc(userTaskDocRef, userTaskData);
+      
+      console.log('User task record created successfully');
+    } catch(e) {
+      console.log("Error creating user task record:", e);
+    }
+  }
 
 
   return (
     <FlatList
       data={taskRequests}
       renderItem={({item}: {item: TaskRequestProps}) => (
-        <View style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            backgroundColor: '#84a98c',
-            marginTop: 20,
-            padding: 17,
-            borderRadius: 15,
-        }}>
-            
+        <View style={styles.requestCardContainer}>
+          <View style={styles.requestCard}>
             <TaskRequestCard id={item.id} requesterName={item.requesterName} requesterId={item.requesterId} taskTime={item.taskTime} taskName={item.taskName} taskId={item.taskId}/>
-            <View>  
+            <View style={styles.buttonContainer}>  
                 <Pressable style={styles.button} onPress={async () => {
                   await removeFromRequested(item.requesterId, item.taskId);
                   await addToAssigned(item.requesterId, item.taskId);
+                  await addToUserTaskList(item.requesterId, item.taskId);
                   console.log('accepted users task request')
                 }}>
                     <Text style={styles.darkSubtitle}>Accept</Text>
@@ -168,16 +221,13 @@ export default function TaskRequests({ gardenId }: GardenSettingsProps) {
                     <Text style={styles.darkSubtitle}>Deny</Text>
                 </Pressable>
             </View> 
+          </View>
         </View>
       )}
       keyExtractor={item => item.id}
+      horizontal={true}
       showsHorizontalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-        />
-      }
+      contentContainerStyle={styles.horizontalList}
     />
   );
 }
@@ -193,6 +243,25 @@ const styles = StyleSheet.create({
         paddingBottom: 10,
         
     },
+    horizontalList: {
+        paddingHorizontal: 10,
+    },
+    requestCardContainer: {
+        marginRight: 15,
+        width: 300,
+    },
+    requestCard: {
+        flexDirection: 'column',
+        backgroundColor: '#84a98c',
+        padding: 17,
+        borderRadius: 15,
+        minHeight: 120,
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginTop: 10,
+    },
     darkSubtitle: {
         fontFamily: 'Quicksand-Regular',
         color: '#2f3e46',
@@ -205,6 +274,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#52796f',
         width: 80,
         padding: 8,
-        margin: 8,
+        margin: 4,
     },
 })
