@@ -32,9 +32,9 @@ export default function EditProfile({ onHide, onRefresh, oldbio, roleTags }: Pro
                 bio: newBio,
             });
             onRefresh(); 
-            console.log('Name updated successfully!');
+            console.log('Bio updated successfully!');
         } catch (error) {
-            console.error('Error updating name: ', error);
+            console.error('Error updating Bio: ', error);
         }
     };
 
