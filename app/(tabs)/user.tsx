@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, Button, Image, FlatList, ImageBackground, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { Link } from 'expo-router';
 import { useLocalSearchParams } from 'expo-router';
-import { FIREBASE_AUTH } from '../../../firebaseconfig';
+import { FIREBASE_AUTH } from '../../firebaseconfig';
 import { signOut } from 'firebase/auth';
 
 
@@ -14,15 +14,15 @@ import { signOut } from 'firebase/auth';
 
 import { useState, useEffect } from 'react';
 import { DataTable } from 'react-native-paper';
-import TaskCard from '../../../components/TaskCard'
+import TaskCard from '../../components/TaskCard'
 import { QuerySnapshot, collection, getDocs, onSnapshot} from "firebase/firestore";
-import { FIRESTORE_DB } from '../../../firebaseconfig';
-import NewTask from '../../inputscreens/newtask';
+import { FIRESTORE_DB } from '../../firebaseconfig';
+import NewTask from '../inputscreens/newtask';
 // import GardenSettings from '../../inputscreens/gardensettings';
 
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import EditProfile from "../../editProfile";
+import EditProfile from "../editProfile";
 
 const Stack = createNativeStackNavigator();
 
@@ -33,6 +33,7 @@ export default function Users() {
  //gets number passed into path for [id]
  const { id } = useLocalSearchParams();
 
+  
 
 
 

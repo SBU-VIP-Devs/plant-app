@@ -4,18 +4,37 @@ import { getAuth, initializeAuth, getReactNativePersistence } from "firebase/aut
 import { getStorage } from "firebase/storage";
 import { getFirestore } from "firebase/firestore";
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+//import Config from 'react-native-config';
+import Constants from 'expo-constants';
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
+const {
+  FIREBASE_API_KEY,
+  FIREBASE_AUTH_DOMAIN,
+  FIREBASE_PROJECT_ID,
+  FIREBASE_STORAGE_BUCKET,
+  FIREBASE_MESSAGING,
+  FIREBASE_APP_ID,
+} = Constants?.expoConfig?.extra as {
+  FIREBASE_API_KEY: string;
+  FIREBASE_AUTH_DOMAIN: string;
+  FIREBASE_PROJECT_ID: string;
+  FIREBASE_STORAGE_BUCKET: string;
+  FIREBASE_MESSAGING: string;
+  FIREBASE_APP_ID: string;
+};
+
+//Your web app's Firebase configuration
+
 const firebaseConfig = {
-  apiKey: 'AIzaSyBaowFYf3YmOC5azEOADInfuXUjPsV6yUs',
-  authDomain: 'plantapp-3d30d.firebaseapp.com',
-  projectId: 'plantapp-3d30d',
-  storageBucket: 'plantapp-3d30d.appspot.com',
-  messagingSenderId: '411580564438',
-  appId: '1:411580564438:web:99561399320a20401b5a77'
+  apiKey: FIREBASE_API_KEY,
+  authDomain: FIREBASE_AUTH_DOMAIN,
+  projectId: FIREBASE_PROJECT_ID,
+  storageBucket: FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: FIREBASE_MESSAGING,
+  appId: FIREBASE_APP_ID
 };
 
 // Initialize Firebase
