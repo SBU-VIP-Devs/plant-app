@@ -45,17 +45,6 @@ export default function TabsLayout() {
                 title: "User"
             }}
         />
-        <Tabs.Screen 
-            name = "test"
-            options = {{
-                headerShown: false,
-                headerTitle: "Test",
-                headerStyle: {
-                    backgroundColor: "#84a98c"
-                },
-                title: "Test"
-            }}
-        />
     </Tabs>
   );
 }

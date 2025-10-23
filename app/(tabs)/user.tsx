@@ -179,13 +179,13 @@ export default function Users() {
    <View style={styles.container}>
      <ScrollView>
        <ImageBackground style={{ height: 125, opacity: 0.7, }}
-         source={require('../../../assets/gardens/garden1.jpeg')}
+         source={require('../../assets/gardens/garden1.jpeg')}
        />
 
 
        <View style={{ paddingLeft: 25, paddingRight: 25 }}>
          <View style={{ alignItems: 'center', marginTop: -45, }}>
-           <Image source={require('../../../assets/flower.jpg')} style={styles.profilepic} />
+           <Image source={require('../../assets/flower.jpg')} style={styles.profilepic} />
            <Text style={styles.name}>{fnameLocal}</Text>
            <Text style={styles.email}>{emailLocal}</Text>
            {/* <Text style={styles.email}>{user?.email}</Text> */}
