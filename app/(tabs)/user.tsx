@@ -7,18 +7,12 @@ import { useLocalSearchParams } from 'expo-router';
 import { FIREBASE_AUTH } from '../../firebaseconfig';
 import { signOut } from 'firebase/auth';
 
-
-// import { collection, getDocs } from "firebase/firestore";
-// import { FIRESTORE_DB } from '../../../firebaseconfig';
-
-
 import { useState, useEffect } from 'react';
 import { DataTable } from 'react-native-paper';
 import TaskCard from '../../components/TaskCard'
-import { QuerySnapshot, collection, getDocs, onSnapshot} from "firebase/firestore";
+import { doc, getDoc, setDoc, QuerySnapshot, collection, getDocs, onSnapshot } from "firebase/firestore";
 import { FIRESTORE_DB } from '../../firebaseconfig';
 import NewTask from '../inputscreens/newtask';
-// import GardenSettings from '../../inputscreens/gardensettings';
 
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -28,189 +22,215 @@ const Stack = createNativeStackNavigator();
 
 
 export default function Users() {
-
-
- //gets number passed into path for [id]
- const { id } = useLocalSearchParams();
-
-  
+  console.log("TESTING!!!!!!!")
 
 
 
- //if you want id as a string
- //const {id} = useLocalSearchParams<{id: string}>();
- const user = FIREBASE_AUTH.currentUser;
+  //gets number passed into path for [id]
+  //  const { id } = useLocalSearchParams();
 
 
- //local list to display the task data
- //state var declaration:    const [var, setVar] = useState("a default msg");
- //var is the var name and stores the state "default disc", setVar will update the default using setVar(new value);
- const [descLocal, setDesc] = useState("default desc");
- const [gardenIdLocal, setGardenId] = useState("default desc");
- const [locationLocal, setLocation] = useState("default loc");
+  //if you want id as a string
+  //const {id} = useLocalSearchParams<{id: string}>();
+  const user = FIREBASE_AUTH.currentUser;
+  const userID = user?.uid;
 
 
- // 1. CREATE VARIABLE (USESTATE SO U CAN EDIT)
+  //local list to display the task data
+  //state var declaration:    const [var, setVar] = useState("a default msg");
+  //var is the var name and stores the state "default disc", setVar will update the default using setVar(new value);
+  const [descLocal, setDesc] = useState("default desc");
+  const [gardenIdLocal, setGardenId] = useState("default desc");
+  const [locationLocal, setLocation] = useState("default loc");
 
 
- // if(user!=null && user.displayName!=null) { // name could be grabbed from email}
- // const [fnameLocal, setFname] = useState("Sprout");
- const [fnameLocal, setFname] = useState(user?.displayName);
- // const [lnameLocal, setLname] = useState("Doe");
- const [emailLocal, setEmail] = useState(user?.email);
- const [bioLocal, setBio] = useState(null); //bioLocal && (<Text>{bioLocal}</Text>) // Only shows the bio if exists
- const [hoursLocal, setHours] = useState(0);
- const [dateLocal, setDate] = useState(null);
- const [detailLocal, setDetail] = useState("No details provided");
- const [locLocal, setLoc] = useState(null);
- const [roleLocal, setRole] = useState<{ id: string; title: string }[]>([]);
+  // 1. CREATE VARIABLE (USESTATE SO U CAN EDIT)
 
-  
- const [editClicked, setEditClicked] = useState(false);
- const [editVisible, setEditVisible] = useState(false);
- const show = () => setEditVisible(true);
- const hide = () => setEditVisible(false);
 
- //READS TASKLIST FROM FIREBASE
+  // if(user!=null && user.displayName!=null) { // name could be grabbed from email}
+  // const [fnameLocal, setFname] = useState("Sprout");
+  const [fnameLocal, setFname] = useState(user?.displayName);
+  // const [lnameLocal, setLname] = useState("Doe");
+  const [emailLocal, setEmail] = useState(user?.email);
+  const [bioLocal, setBio] = useState(null); //bioLocal && (<Text>{bioLocal}</Text>) // Only shows the bio if exists
+  const [hoursLocal, setHours] = useState(0);
+  const [dateLocal, setDate] = useState(null);
+  const [detailLocal, setDetail] = useState("No details provided");
+  const [locLocal, setLoc] = useState(null);
+  const [roleLocal, setRole] = useState<{ id: string; title: string }[]>([]);
+  const [yearLocal, setYear] = useState(null);
+  const [pronounsLocal, setPronouns] = useState(null);
+
+  const [editClicked, setEditClicked] = useState(false);
+  const [editVisible, setEditVisible] = useState(false);
+  const show = () => setEditVisible(true);
+  const hide = () => setEditVisible(false);
+
+  //READS TASKLIST FROM FIREBASE
+
+
+  // const getProfile = async () => { //getProfile var is a function
+  //   try {
+
+  //     const list: {
+  //       id: string; title: string; bio?: string
+  //       ; vHours?: string; actvDate?: string; actvDet?: string; actvLoc?: string
+  //       ; year?: string; pronouns: string
+  //     }[] = [];
+  //     //const list: { id: string; title: string; name?: string; school?: string }[] = [];
+
+
+  //     //change the path in the collection function to reflect the path to the collection you want (i hard coded a garden id)
+  //     const querySnapshot = await getDocs(collection(FIRESTORE_DB, `profiles`));
+
+
+  //     //prob grab user I Dand make a new document based on it. then add data
+  //     //then pass the userID as props to editProfile so that you can edit.
+
+  //     querySnapshot.forEach((doc) => {
+  //       //THIS SHOULD MATCH THE FORMAT OF THE FIELDS BC ITS READING FROM ALL THE DATA (not just some)
+  //       // ADD FIELD U WANT HERE
+  //       const {
+  //         bio,
+  //         // email,
+  //         // fname,
+  //         role,
+  //         vHours,
+  //         actvDate,
+  //         actvDet,
+  //         actvLoc,
+  //         year,
+  //         pronouns
+  //       } = doc.data()
+
+  //       // list.push({ bio, email, fname, lname, vHours, actvDate, actvDet, actvLoc});
+
+  //       if (role && Array.isArray(role)) {
+  //         role.forEach((item: string, index: number) => {
+  //           list.push({ id: `${doc.id}-${index}`, title: item, bio, vHours, actvDate, actvDet, actvLoc, year, pronouns }); // Create a unique ID for each list item
+  //         });
+  //       }
+  //       //PUSH THE VALUES OF INTEREST
+  //     });
+
+  //     setRole(list);
+
+  //     if (!querySnapshot.empty) {
+  //       //sets each value individually
+
+  //       //SET VALUES HERE
+  //       const firstItem = querySnapshot.docs[0].data(); // Assuming you want to display the first document's data
+  //       if (firstItem) {
+  //         setBio(firstItem.bio);
+  //         // setFname(firstItem.fname);
+  //         // setLname(firstItem.lname);
+  //         // setEmail(firstItem.email);
+  //         // setRole(firstItem.role);
+  //         setHours(firstItem.vHours);
+  //         setDate(firstItem.actvDate);
+  //         setDetail(firstItem.actvDet);
+  //         setLoc(firstItem.actvLoc);
+  //         // setRole(firstItem.role);
+  //         setYear(firstItem.year);
+  //         setPronouns(firstItem.pronouns);
+
+  //       }
+
+  //     }
+  //   } catch (e) {
+  //     console.log(e)
+  //   }
+  // }
 
 
   const getProfile = async () => { //getProfile var is a function
-   try {
-     // const list: any = []
-     const list: {
-       id: string; title: string; bio?: string
-       ; vHours?: string; actvDate?: string; actvDet?: string; actvLoc?: string
-     }[] = [];
-     //const list: { id: string; title: string; name?: string; school?: string }[] = [];
+    if (userID) {
+      const docRef = doc(FIRESTORE_DB, "profiles", userID);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+          const profileData = docSnap.data();
+
+          setBio(profileData.bio);
+          setHours(profileData.vHours);
+          // setDate(profileData.actvDate);
+          // setDetail(profileData.actvDet);
+          // setLoc(profileData.actvLoc);
+          // setRole(firstItem.role);
+          setYear(profileData.year);
+          setPronouns(profileData.pronouns);
+
+          // ...
+      } else {
+        await setDoc(docRef, {
+                bio: "",
+                vHours: 0,
+                year: "",
+                pronouns: ""
+                // ... other default fields
+            });
+      }
+    } else {
+
+    }
+
+  }
+
+  useEffect(() => {
+    getProfile();
+  }, [])
 
 
-     //change the path in the collection function to reflect the path to the collection you want (i hard coded a garden id)
-     const querySnapshot = await getDocs(collection(FIRESTORE_DB, `profiles`));
-
-
-
-
-     querySnapshot.forEach((doc) => {
-       //THIS SHOULD MATCH THE FORMAT OF THE FIELDS BC ITS READING FROM ALL THE DATA (not just some)
-
-
-       // ADD FIELD U WANT HERE
-       const {
-         bio,
-         // email,
-         // fname,
-
-
-         role,
-
-
-         vHours,
-         actvDate,
-         actvDet,
-         actvLoc
-       } = doc.data()
-
-
-
-
-       // list.push({ bio, email, fname, lname, vHours, actvDate, actvDet, actvLoc});
-
-
-       if (role && Array.isArray(role)) {
-         role.forEach((item: string, index: number) => {
-           list.push({ id: `${doc.id}-${index}`, title: item, bio, vHours, actvDate, actvDet, actvLoc }); // Create a unique ID for each list item
-         });
-       }
-
-
-       //PUSH THE VALUES OF INTEREST
-     });
-
-
-     setRole(list);
-
-
-     if (!querySnapshot.empty) {
-       //sets each value individually
-
-
-       //SET VALUES HERE
-       const firstItem = querySnapshot.docs[0].data(); // Assuming you want to display the first document's data
-       if (firstItem) {
-         setBio(firstItem.bio);
-         // setFname(firstItem.fname);
-         // setLname(firstItem.lname);
-         // setEmail(firstItem.email);
-         // setRole(firstItem.role);
-         setHours(firstItem.vHours);
-         setDate(firstItem.actvDate);
-         setDetail(firstItem.actvDet);
-         setLoc(firstItem.actvLoc);
-         // setRole(firstItem.role);
-
-
-       }
-
-     }
-   } catch (e) {
-     console.log(e)
-   }
- }
+  const onRefresh = () => {
+    getProfile();
+  }
 
 
 
 
 
-
- useEffect(() => {
-   getProfile();
- }, [])
-
-
- const onRefresh = () => {
-   getProfile();
- }
+  return (
+    <View style={styles.container}>
+      <ScrollView>
+        <ImageBackground style={{ height: 125, opacity: 0.7, }}
+          source={require('../../assets/gardens/garden1.jpeg')}
+        />
 
 
+        <View style={{ paddingLeft: 25, paddingRight: 25 }}>
+          <View style={{ alignItems: 'center', marginTop: -45, }}>
+            <Image source={require('../../assets/flower.jpg')} style={styles.profilepic} />
+            <Text style={styles.name}>{fnameLocal}</Text>
+            <Text style={styles.email}>{emailLocal}</Text>
+            {/* <Text style={styles.email}>{user?.email}</Text> */}
+          </View>
 
 
-
- return (
-   <View style={styles.container}>
-     <ScrollView>
-       <ImageBackground style={{ height: 125, opacity: 0.7, }}
-         source={require('../../assets/gardens/garden1.jpeg')}
-       />
-
-
-       <View style={{ paddingLeft: 25, paddingRight: 25 }}>
-         <View style={{ alignItems: 'center', marginTop: -45, }}>
-           <Image source={require('../../assets/flower.jpg')} style={styles.profilepic} />
-           <Text style={styles.name}>{fnameLocal}</Text>
-           <Text style={styles.email}>{emailLocal}</Text>
-           {/* <Text style={styles.email}>{user?.email}</Text> */}
-         </View>
-
-
-         <Text style={styles.bioTitle}>Bio:</Text>
-         <Text style={styles.bio}>{bioLocal}</Text>
-         <View style={{ height: 28 }}>
+          <Text style={styles.bioTitle}>Bio:</Text>
+          <Text style={styles.bio}>{bioLocal}</Text>
+          <View style={{ height: 28 }}>
 
 
 
 
-           {/* {roleLocal.map((role) => (
+            {/* {roleLocal.map((role) => (
    <Text key={role.id}>{role.title}</Text>
  ))}
 */}
-           <ScrollView horizontal={true}>
+            {/* <ScrollView horizontal={true}>
              {roleLocal.map((role) => (
                <View key={role.id} style={styles.tags}>
                  <Text style={{ color: "#cad2c5", fontWeight: "bold" }}>{String(role.title)}</Text>
                </View>
              ))}
-           </ScrollView>
-           {/* <FlatList
+           </ScrollView> */}
+            <ScrollView horizontal={true} >
+              <View style={styles.tags}>
+                <Text style={{ color: "#cad2c5", fontWeight: "bold" }}>Test</Text>
+                {/* <Text style={{ color: "#cad2c5", fontWeight: "bold" }}>Test2</Text> */}
+              </View>
+            </ScrollView>
+
+            {/* <FlatList
              data={roleList}
              renderItem={({ item }) =>
              (<View style={styles.tags}>
@@ -219,65 +239,65 @@ export default function Users() {
              keyExtractor={item => item.id}
              horizontal={true}
            /> */}
-         </View>
+          </View>
 
 
 
 
-         <View style={styles.buttonContainer}>
-           {/* <Text>Test</Text> */}
-           <View>
-             {/* <TouchableOpacity style={styles.editButton} onPress={() => setEditClicked(true)}>  */}
-             <TouchableOpacity style={styles.editButton} onPress={show}>
+          <View style={styles.buttonContainer}>
+            {/* <Text>Test</Text> */}
+            <View>
+              {/* <TouchableOpacity style={styles.editButton} onPress={() => setEditClicked(true)}>  */}
+              <TouchableOpacity style={styles.editButton} onPress={show}>
 
 
-               {/* onPress={show} */}
-               <Text>Edit Profile</Text>
-             </TouchableOpacity>
+                {/* onPress={show} */}
+                <Text>Edit Profile</Text>
+              </TouchableOpacity>
 
 
-             <Modal
-               visible={editVisible}
-               onRequestClose={hide}
-               animationType='slide'
-             >
-               <View style={{ marginTop: 50 }}>
-                 <Button title='Close' onPress={hide} />
-                 {/* <NewGarden/> */}
-               </View>
-               <View>
-                 <EditProfile onHide={hide} onRefresh={onRefresh} oldbio={bioLocal} roleTags = {roleLocal} />
-               </View>
-             </Modal>
-
-
-
-
-           </View>
+              <Modal
+                visible={editVisible}
+                onRequestClose={hide}
+                animationType='slide'
+              >
+                <View style={{ marginTop: 50 }}>
+                  <Button title='Close' onPress={hide} />
+                  {/* <NewGarden/> */}
+                </View>
+                <View>
+                  <EditProfile onHide={hide} onRefresh={onRefresh} oldbio={bioLocal} roleTags={roleLocal} userID={userID} />
+                </View>
+              </Modal>
 
 
 
 
-
-
-         </View>
-
+            </View>
 
 
 
-         <View style={styles.totalHours}>
 
 
-           {
-             hoursLocal > 0 ? (
-               <Text style={{ fontSize: 22, color: "#354f52", fontWeight: "bold", textAlign: "center" }}>{hoursLocal} Hours Volunteered!{"\n"}
-                 <Text style={{ fontStyle: 'italic', fontWeight: "normal", fontSize: 15, }}>Keep up the good work!</Text>
-               </Text>
-             ) : (<Text style={{ fontStyle: 'italic', fontWeight: "normal", fontSize: 15, }}>No Hours Yet!</Text>)}
+
+          </View>
 
 
-         </View>
-         {/* <View style={styles.activity}>
+
+
+          <View style={styles.totalHours}>
+
+
+            {
+              hoursLocal > 0 ? (
+                <Text style={{ fontSize: 22, color: "#354f52", fontWeight: "bold", textAlign: "center" }}>{hoursLocal} Hours Volunteered!{"\n"}
+                  <Text style={{ fontStyle: 'italic', fontWeight: "normal", fontSize: 15, }}>Keep up the good work!</Text>
+                </Text>
+              ) : (<Text style={{ fontStyle: 'italic', fontWeight: "normal", fontSize: 15, }}>No Hours Yet!</Text>)}
+
+
+          </View>
+          {/* <View style={styles.activity}>
            <Text style={{ fontSize: 20, color: "#2f3e46", marginLeft: 10, marginTop: 8, marginBottom: 7, }}>Lastest Activity</Text>
            <View style={{ flexDirection: 'row', }}>
              <Image source={require('../../../assets/gardens/garden2.jpeg')} style={styles.actImage} />
@@ -296,156 +316,156 @@ export default function Users() {
 
 
 
-         <Button title="Sign out" onPress={() => signOut(FIREBASE_AUTH)} />
+          <Button title="Sign out" onPress={() => signOut(FIREBASE_AUTH)} />
 
 
-       </View>
-
-
-
+        </View>
 
 
 
-     </ScrollView>
 
 
-   </View>
+
+      </ScrollView>
 
 
- );
+    </View>
+
+
+  );
 }
 
 
 const styles = StyleSheet.create({
- container: {
-   flex: 1,
-   backgroundColor: '#cad2c5',
-   justifyContent: 'flex-start',
-   // paddingLeft:30,
-   // paddingRight: 30,
-   // padding: 30,
- },
+  container: {
+    flex: 1,
+    backgroundColor: '#cad2c5',
+    justifyContent: 'flex-start',
+    // paddingLeft:30,
+    // paddingRight: 30,
+    // padding: 30,
+  },
 
 
- name: {
-   fontWeight: "bold",
-   fontSize: 22,
-   color: "#2f3e46",
- },
+  name: {
+    fontWeight: "bold",
+    fontSize: 22,
+    color: "#2f3e46",
+  },
 
 
- email: {
-   fontWeight: "bold",
-   color: "#52796f",
- },
+  email: {
+    fontWeight: "bold",
+    color: "#52796f",
+  },
 
 
- profilepic: {
-   height: 100,
-   width: 100,
-   borderRadius: 100,
-   borderWidth: 4,
-   borderColor: "#354f52",
- },
+  profilepic: {
+    height: 100,
+    width: 100,
+    borderRadius: 100,
+    borderWidth: 4,
+    borderColor: "#354f52",
+  },
 
 
- bioTitle: {
-   marginTop: 8,
-   fontSize: 15,
-   textAlign: "left",
-   textDecorationLine: 'underline',
-   fontWeight: "bold",
- },
+  bioTitle: {
+    marginTop: 8,
+    fontSize: 15,
+    textAlign: "left",
+    textDecorationLine: 'underline',
+    fontWeight: "bold",
+  },
 
 
- bio: {
-   paddingLeft: 10,
-   fontSize: 15,
-   marginBottom: 15,
- },
+  bio: {
+    paddingLeft: 10,
+    fontSize: 15,
+    marginBottom: 15,
+  },
 
 
- tags: {
-   backgroundColor: "#52796f",
-   marginLeft: 5,
-   height: 20,
-   justifyContent: "center",
-   paddingLeft: 5,
-   paddingRight: 5,
-   borderRadius: 8,
- },
+  tags: {
+    backgroundColor: "#52796f",
+    marginLeft: 5,
+    height: 20,
+    justifyContent: "center",
+    paddingLeft: 5,
+    paddingRight: 5,
+    borderRadius: 8,
+  },
 
 
- editButton: {
-   backgroundColor: "#84a98c",
-   // marginBottom: 15,
-   marginLeft: 235,
-   alignItems: "center",
-   justifyContent: "center",
-   borderRadius: 5,
-   height: 20,
-   width: 90,
- },
+  editButton: {
+    backgroundColor: "#84a98c",
+    // marginBottom: 15,
+    marginLeft: 235,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 5,
+    height: 20,
+    width: 90,
+  },
 
 
- totalHours: {
-   backgroundColor: "#84a98c",
-   height: 70,
-   borderRadius: 8,
-   justifyContent: "center",
-   alignItems: "center",
-   marginBottom: 10,
- },
+  totalHours: {
+    backgroundColor: "#84a98c",
+    height: 70,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+  },
 
 
- activity: {
-   backgroundColor: "#84a98c",
-   height: 145,
-   borderRadius: 8,
-   // justifyContent: "center",
- },
+  activity: {
+    backgroundColor: "#84a98c",
+    height: 145,
+    borderRadius: 8,
+    // justifyContent: "center",
+  },
 
 
- actDetails: {
-   backgroundColor: "#aaaaaa",
- },
+  actDetails: {
+    backgroundColor: "#aaaaaa",
+  },
 
 
- actImage: {
-   width: 95,
-   height: 95,
-   marginRight: 10,
-   marginLeft: 10,
-   borderRadius: 8,
- },
- buttonContainer: {
-   // Added padding to ensure the button is not cramped
-   paddingBottom: 10,
-   justifyContent: 'center', // Center the button
-   alignItems: 'center', // Center the button horizontally
-   color: "#000000",
- },
+  actImage: {
+    width: 95,
+    height: 95,
+    marginRight: 10,
+    marginLeft: 10,
+    borderRadius: 8,
+  },
+  buttonContainer: {
+    // Added padding to ensure the button is not cramped
+    paddingBottom: 10,
+    justifyContent: 'center', // Center the button
+    alignItems: 'center', // Center the button horizontally
+    color: "#000000",
+  },
 
 
- test: {
-   // width: 200,
-   // height: 200,
-   // justifyContent: 'center',
-   // alignItems: 'center',
-   // borderWidth: 2,            // Thickness of the border
-   // borderColor: '#000',       // Color of the border
-   // borderRadius: 10,          // Rounded corners (optional)
-   // padding: 20,     
-   // fontSize: 2,
-   backgroundColor: "#84a98c",
-   marginBottom: 15,
-   marginLeft: 235,
-   alignItems: "center",
-   justifyContent: "center",
-   borderRadius: 5,
-   height: 20,
-   width: 100,
- }
+  test: {
+    // width: 200,
+    // height: 200,
+    // justifyContent: 'center',
+    // alignItems: 'center',
+    // borderWidth: 2,            // Thickness of the border
+    // borderColor: '#000',       // Color of the border
+    // borderRadius: 10,          // Rounded corners (optional)
+    // padding: 20,     
+    // fontSize: 2,
+    backgroundColor: "#84a98c",
+    marginBottom: 15,
+    marginLeft: 235,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 5,
+    height: 20,
+    width: 100,
+  }
 
 
 });

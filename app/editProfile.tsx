@@ -7,32 +7,42 @@ import { getFirestore, collection, QuerySnapshot, getDocs,  doc, updateDoc } fro
 import React, { useState } from 'react';
 import { View, Text, Button, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
+import { FIREBASE_AUTH } from '../firebaseconfig';
 
 type Props = {
   onHide: () => void;
   onRefresh: () => void;
   oldbio: string | null;
   roleTags: {id: string; title: string}[];
+  userID: string | undefined;
 };
 
-export default function EditProfile({ onHide, onRefresh, oldbio, roleTags }: Props) {
+export default function EditProfile({ onHide, onRefresh, oldbio, roleTags , userID}: Props) {
+    // const user = FIREBASE_AUTH.currentUser;
+    
     const [newBio, setNewBio] = useState(oldbio || '');
-    const [newTag, setNewTag] = useState('');
+    const [newYear, setYear] = useState('');
 
     const bio = (text: string) => {
+        setNewBio(text);
+    };
+    const year = (text: string) => {
         setNewBio(text);
     };
 
 
     const updateBio = async () => {
-        try {
-            const userId = 'MwI8xB1YxoaP6sgVfGGs';
-            const profile = doc(FIRESTORE_DB, 'profiles', userId);
-            await updateDoc(profile, {
-                bio: newBio,
-            });
-            onRefresh(); 
-            console.log('Bio updated successfully!');
+        try {//newgarden.tsx
+            // const userId = 'MwI8xB1YxoaP6sgVfGGs';// if null, create the user fields and new userID 
+            if(userID) {
+                const profile = doc(FIRESTORE_DB, 'profiles', userID);
+                await updateDoc(profile, {
+                    bio: newBio,
+                });
+                onRefresh(); 
+                console.log('Bio updated successfully!');
+            }
+            
         } catch (error) {
             console.error('Error updating Bio: ', error);
         }
