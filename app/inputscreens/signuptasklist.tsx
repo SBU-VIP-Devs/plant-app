@@ -11,10 +11,11 @@ import NewTask from '../inputscreens/newtask';
 import { TaskData } from './gardentasklist';
 
 interface TaskListProps {
-    gardenId: string | null;  
+    gardenId: string | null;
+    onRefresh?: () => void;
 }
 
-export default function SignUpList({ gardenId }: TaskListProps) {
+export default function SignUpList({ gardenId, onRefresh }: TaskListProps) {
   
     //firebase auth user
     const user = FIREBASE_AUTH.currentUser;
@@ -74,13 +75,12 @@ export default function SignUpList({ gardenId }: TaskListProps) {
       getTaskList();
     }, [])
 
-  const [refreshing, setRefreshing] = useState(false);
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    // Fetch new data from your API
+  // Refresh function that can be called from parent
+  const refreshSignUpTasks = () => {
     getTaskList();
-    setRefreshing(false);
+    if (onRefresh) {
+      onRefresh();
+    }
   };
 
   //uploads to firebase and refresh
@@ -107,7 +107,7 @@ export default function SignUpList({ gardenId }: TaskListProps) {
       console.log(e)
       console.log("may be invalid user.")
     }
-    onRefresh()
+    refreshSignUpTasks()
   }
 
   return (
@@ -118,24 +118,24 @@ export default function SignUpList({ gardenId }: TaskListProps) {
           data={taskList}
           renderItem={({item}: {item: TaskData}) => {
               return (
-                <View style={styles.cardContainer}>
-                    <TaskCard item={item} key={item.id}/>
-                    <View style={{alignItems: 'center'}}>
-                        <Pressable style={styles.button} onPress={() => uploadTaskRequest(user?.uid, item.id)}>
-                            <Text style={styles.lightTitle}>Request This Task</Text>
-                        </Pressable> 
-                    </View>
+                <View style={styles.horizontalCardContainer}>
+                  <View style={styles.cardContainer}>
+                      <TaskCard item={item} key={item.id}/>
+                      <View style={{alignItems: 'center'}}>
+                          <Pressable style={styles.button} onPress={() => uploadTaskRequest(user?.uid, item.id)}>
+                              <Text style={styles.lightTitle}>Request This Task</Text>
+                          </Pressable> 
+                      </View>
+                  </View>
                 </View>
               )
           }}
           keyExtractor={item => item.id}
-          showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            />}
+          horizontal={true}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalList}
         />:
-        <Text>No tasks!</Text>
+        <Text style={styles.noTasksText}>No tasks available!</Text>
       }
       </View>
     </View>
@@ -151,27 +151,39 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#cad2c5',
   },
+  horizontalList: {
+    paddingHorizontal: 10,
+  },
+  horizontalCardContainer: {
+    marginRight: 15,
+    width: 280,
+  },
   cardContainer: {
     flexDirection: 'column',
     justifyContent: 'center',
     backgroundColor: '#84a98c',
     borderRadius: 10,
-    marginBottom: 20,
     paddingTop: 10,
     paddingBottom: 10,
-},
-button: {
+    minHeight: 200,
+  },
+  button: {
     alignItems: 'center',
     borderRadius: 30,
     backgroundColor: '#52796f',
-    width: '60%',
+    width: '80%',
     padding: 8,
     margin: 8,
-},
-lightTitle: {
+  },
+  lightTitle: {
     fontFamily: 'Quicksand-Bold',
     color: '#2f3e46',
     fontSize: 17,
-},
-
+  },
+  noTasksText: {
+    textAlign: 'center',
+    color: '#2f3e46',
+    fontSize: 16,
+    marginVertical: 20,
+  },
 });

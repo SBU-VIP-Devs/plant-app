@@ -23,10 +23,11 @@ export interface TaskData {
 };
 
 interface TaskListProps {
-    gardenId: string | null;  
+    gardenId: string | null;
+    onRefresh?: () => void;
 }
 
-export default function TaskList({ gardenId }: TaskListProps) {
+export default function TaskList({ gardenId, onRefresh }: TaskListProps) {
   
     //local list to display the task data
     const [taskList, updateTaskList] = useState(null);
@@ -87,12 +88,12 @@ export default function TaskList({ gardenId }: TaskListProps) {
   const show = () => setNewTaskVisible(true);
   const hide = () => setNewTaskVisible(false);
 
-  const [refreshing, setRefreshing] = useState(false);
-
-  const onRefresh = () => {
-    setRefreshing(true);
+  // Refresh function that can be called from parent
+  const refreshTasks = () => {
     getTaskList();
-    setRefreshing(false);
+    if (onRefresh) {
+      onRefresh();
+    }
   };
 
   return ( 
@@ -102,16 +103,14 @@ export default function TaskList({ gardenId }: TaskListProps) {
           <FlatList
             data={taskList}
             renderItem={({item}: {item: TaskData}) => {
-                return <TaskCard item={item} key={item.id}/>
+                return <View style={styles.taskCardContainer}><TaskCard item={item} key={item.id}/></View>
             }}
             keyExtractor={item => item.id}
-            showsVerticalScrollIndicator={false}
-            refreshControl={<RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              />}
+            horizontal={true}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
           />:
-          <Text>No tasks! Click the button below to create one.</Text>
+          <Text style={styles.noTasksText}>No tasks! Click the button below to create one.</Text>
         }
       </View>
       <Button title='New Task +' onPress={show}/>
@@ -124,7 +123,7 @@ export default function TaskList({ gardenId }: TaskListProps) {
                 <View style={{ flex: 1, marginTop: 50}}>
                     <Button title='Close' onPress={() => {
                         hide();         
-                        onRefresh();    
+                        refreshTasks();    
                     }} />
                     {/* onRefresh */}
                     <NewTask gardenId={gardenId}/>
@@ -142,5 +141,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     backgroundColor: '#cad2c5',
+  },
+  horizontalList: {
+    paddingHorizontal: 10,
+  },
+  taskCardContainer: {
+    marginRight: 15,
+    width: 280,
+  },
+  noTasksText: {
+    textAlign: 'center',
+    color: '#2f3e46',
+    fontSize: 16,
+    marginVertical: 20,
   },
 });

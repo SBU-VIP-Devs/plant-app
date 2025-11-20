@@ -70,17 +70,25 @@ export default function TaskCard({item}: TaskCardProps) {
                     <Text style={styles.darkSubtitle}>{item.desc}</Text>
                     <Text style={styles.darkSubtitle}>{item.location}</Text>
                     <Text style={styles.darkTitle}>Assigned to: </Text>
-                    <View style={styles.assignedUser}>
-                        {item.uidAssigned[0]==="\0"?
-                        <Text style={styles.darkSubtitle}>No one has been assigned to this task.</Text>:
-                        <Text style={styles.darkSubtitle}>{assignedNameList}</Text>}
-                    </View> 
+                    {item.uidAssigned.length === 0 || item.uidAssigned[0]==="\0"?
+                    <Text style={styles.noUserText}>No one has been assigned to this task.</Text>:
+                    <View style={styles.userListContainer}>
+                        {assignedNameList.split(", ").map((name, index) => (
+                            <View key={index} style={styles.singleUserContainer}>
+                                <Text style={styles.userText}>{name}</Text>
+                            </View>
+                        ))}
+                    </View>}
                     <Text style={styles.darkTitle}>Requested by: </Text>
-                    <View style={styles.assignedUser}>
-                        {item.uidRequests[0]==="\0"?
-                        <Text style={styles.darkSubtitle}>No one has requested this task.</Text>:
-                        <Text style={styles.darkSubtitle}>{requestNameList}</Text>}
-                    </View> 
+                    {item.uidRequests.length === 0 || item.uidRequests[0]==="\0"?
+                    <Text style={styles.noUserText}>No one has requested this task.</Text>:
+                    <View style={styles.userListContainer}>
+                        {requestNameList.split(", ").map((name, index) => (
+                            <View key={index} style={styles.singleUserContainer}>
+                                <Text style={styles.userText}>{name}</Text>
+                            </View>
+                        ))}
+                    </View>} 
                 </View>
             </View>
         </View>
@@ -119,6 +127,31 @@ const styles = StyleSheet.create({
         fontFamily: 'Quicksand-Bold',
         color: '#2f3e46',
         fontSize: 17,
+    },
+    userListContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginVertical: 8,
+        gap: 8,
+    },
+    singleUserContainer: {
+        backgroundColor: '#52796f',
+        borderRadius: 20,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        marginBottom: 4,
+    },
+    userText: {
+        fontFamily: 'Quicksand-Medium',
+        color: '#2f3e46',
+        fontSize: 12,
+        textAlign: 'center',
+    },
+    noUserText: {
+        fontFamily: 'Quicksand-Regular',
+        color: '#2f3e46',
+        fontSize: 13,
+        marginVertical: 4,
     },
     assignedUser: {
         alignItems: 'center',
