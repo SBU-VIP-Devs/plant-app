@@ -14,7 +14,7 @@ export default function Calendar({ onDateSelect }: CalendarProps) {
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
-  const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  const dayNames = ['S', 'M', 'T', 'W', 'TH', 'F', 'S'];
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
@@ -154,32 +154,35 @@ const styles = StyleSheet.create({
   },
   dayNamesRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'flex-start',
     marginBottom: 10,
+    paddingHorizontal: 0,
   },
   dayName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#2f3e46',
     fontFamily: 'Quicksand-Bold',
-    width: 40,
+    width: '14.28%', // Exactly 1/7th width to match day containers
     textAlign: 'center',
   },
   calendarGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-around',
+    justifyContent: 'flex-start',
   },
   dayContainer: {
-    width: 40,
-    height: 40,
+    width: '14.28%', // Exactly 1/7th width for 7 columns per row
+    aspectRatio: 1,
     marginBottom: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
   dayButton: {
-    width: 40,
-    height: 40,
+    width: '100%',
+    aspectRatio: 1,
+    maxWidth: 40,
+    maxHeight: 40,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 20,

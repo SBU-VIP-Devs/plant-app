@@ -2,7 +2,9 @@ import 'react-native-gesture-handler';
 import 'expo-dev-client';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { FIRESTORE_DB } from '../../firebaseconfig';
 import Calendar from '../../components/Calendar';
 import LocationCard from '../../components/LocationCard';
 import TaskItem from '../../components/TaskItem';
@@ -18,20 +20,41 @@ export default function TaskScreen() {
     name: 'Garden1 - Life Sciences Building',
     description: 'Main research garden with experimental plants',
   });
-  const [tasks, setTasks] = useState([
-    {
-      id: '1',
-      name: 'Water and weed plant1',
-      time: '2:00 PM',
-      completed: false,
-    },
-    {
-      id: '2',
-      name: 'Trim plant2',
-      time: '2:00 PM',
-      completed: false,
-    },
-  ]);
+  const [tasks, setTasks] = useState<{
+    id: string;
+    name: string;
+    time: string;
+    completed: boolean;
+    locationName?: string;
+  }[]>([]);
+
+  // Read tasks from Firestore for the selected location
+  async function loadTasksForLocation(locationName: string) {
+    try {
+      const tasksCol = collection(FIRESTORE_DB, 'tasks');
+      const q = query(tasksCol, where('locationName', '==', locationName));
+      const snapshot = await getDocs(q);
+      const loaded = snapshot.docs.map((doc) => {
+        const data = doc.data() as any;
+        return {
+          id: doc.id,
+          name: data?.name ?? data?.taskName ?? 'Untitled Task',
+          time: data?.time ?? data?.taskTime ?? '',
+          completed: !!data?.completed,
+          locationName: data?.locationName ?? data?.location,
+        };
+      });
+      setTasks(loaded);
+    } catch (e) {
+      console.log('Error loading tasks:', e);
+      setTasks([]);
+    }
+  }
+
+  // Load tasks when location changes
+  useEffect(() => {
+    loadTasksForLocation(selectedLocation.name);
+  }, [selectedLocation.name]);
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
@@ -77,34 +100,40 @@ export default function TaskScreen() {
     <View style={styles.container}>
       <StatusBar style="dark" />
       
-      {/* Calendar Section */}
-      <Calendar onDateSelect={handleDateSelect} />
-      
-      {/* Location Card */}
-      <LocationCard 
-        location={selectedLocation.name}
-        onPress={handleLocationPress}
-      />
-      
-      {/* Tasks Section */}
-      <View style={styles.tasksSection}>
-        <View style={styles.tasksHeader}>
-          <Text style={styles.tasksLabel}>Tasks</Text>
-          <Text style={styles.chevron}>⌄</Text>
-        </View>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Calendar Section */}
+        <Calendar onDateSelect={handleDateSelect} />
         
-        <View style={styles.tasksContainer}>
-          {tasks.map((task) => (
-            <TaskItem
-              key={task.id}
-              taskName={task.name}
-              time={task.time}
-              completed={task.completed}
-              onToggle={(completed) => handleTaskToggle(task.id, completed)}
-            />
-          ))}
+        {/* Location Card */}
+        <LocationCard 
+          location={selectedLocation.name}
+          onPress={handleLocationPress}
+        />
+        
+        {/* Tasks Section */}
+        <View style={styles.tasksSection}>
+          <View style={styles.tasksHeader}>
+            <Text style={styles.tasksLabel}>Tasks</Text>
+            <Text style={styles.chevron}>⌄</Text>
+          </View>
+          
+          <View style={styles.tasksContainer}>
+            {tasks.map((task) => (
+              <TaskItem
+                key={task.id}
+                taskName={task.name}
+                time={task.time}
+                completed={task.completed}
+                onToggle={(completed) => handleTaskToggle(task.id, completed)}
+              />
+            ))}
+          </View>
         </View>
-      </View>
+      </ScrollView>
       
       {/* Floating Action Button */}
       <TouchableOpacity style={styles.fab} onPress={handleAddTask}>
@@ -133,6 +162,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#E0F7D9',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 100, // Extra padding for FAB
   },
   tasksSection: {
     backgroundColor: '#F5F5DC',
