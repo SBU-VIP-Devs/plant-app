@@ -1,15 +1,17 @@
 import 'react-native-gesture-handler';
 import 'expo-dev-client';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Button, FlatList, Modal, RefreshControl, ScrollView, Pressable } from 'react-native';
+import { Text, View, Button, FlatList, Modal, RefreshControl, ScrollView, Pressable } from 'react-native';
 import { useState, useEffect } from 'react';
 import { DataTable } from 'react-native-paper';
 import TaskCard from '../../components/TaskCard'
-import { QuerySnapshot, collection, getDocs } from "firebase/firestore";
-import { FIRESTORE_DB } from '../../firebaseconfig';
 import NewTask from '../inputscreens/newtask';
 import TaskList from './gardentasklist';
 import TaskRequests from './gardentaskrequests';
+import TaskApprovals from './gardentaskapprovals';
+import CompletedTasks from './gardencompleted';
+import { CommonStyles } from '../../styles';
+import { Colors, FontSizes, FontFamily, Spacing, BorderRadius } from '../../constants';
 
 export interface GardenSettingsProps {
     gardenId: string | null;  
@@ -24,79 +26,48 @@ export default function GardenSettings({ gardenId }: GardenSettingsProps) {
   };
 
   return (
-    <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Garden Settings</Text>
-        <Text style={styles.subtitle}>Selected garden: {gardenId}</Text>
-        <Pressable style={styles.refreshButton} onPress={handleRefresh}>
-          <Text style={styles.refreshButtonText}>Refresh</Text>
+    <ScrollView style={CommonStyles.scrollContainer} contentContainerStyle={{
+      flexDirection: 'column',
+      justifyContent: 'flex-start',
+      paddingTop: Spacing.xl,
+      padding: Spacing.xl,
+      width: '100%',
+      paddingBottom: 70
+    }}>
+      <View style={{alignItems: 'center', marginBottom: Spacing.xl}}>
+        <Text style={{fontSize: FontSizes.title, fontWeight: 'bold', color: Colors.darkText, marginBottom: Spacing.small, textAlign: 'center'}}>Garden Settings</Text>
+        <Text style={{fontSize: FontSizes.medium, color: Colors.darkText, marginBottom: Spacing.base, textAlign: 'center'}}>Selected garden: {gardenId}</Text>
+        <Pressable style={{
+          backgroundColor: Colors.primaryDark,
+          paddingHorizontal: Spacing.xl,
+          paddingVertical: Spacing.small,
+          borderRadius: BorderRadius.large,
+          marginBottom: Spacing.small
+        }} onPress={handleRefresh}>
+          <Text style={{color: Colors.darkText, fontSize: FontSizes.medium, fontWeight: '600'}}>Refresh</Text>
         </Pressable>
       </View>
-      
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Tasks</Text>
+
+      <View style={{marginBottom: Spacing.xxl}}>
+        <Text style={{fontSize: FontSizes.large, fontWeight: '600', color: Colors.darkText, marginBottom: Spacing.base, textAlign: 'center'}}>Tasks</Text>
         <TaskList gardenId={gardenId} onRefresh={handleRefresh} key={`tasks-${refreshKey}`}/>
       </View>
-      
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Task Requests</Text>
+
+      <View style={{marginBottom: Spacing.xxl}}>
+        <Text style={{fontSize: FontSizes.large, fontWeight: '600', color: Colors.darkText, marginBottom: Spacing.base, textAlign: 'center'}}>Task Requests</Text>
         <TaskRequests gardenId={gardenId} onRefresh={handleRefresh} key={`requests-${refreshKey}`}/>
+      </View>
+
+      <View style={{marginBottom: Spacing.xxl}}>
+        <Text style={{fontSize: FontSizes.large, fontWeight: '600', color: Colors.darkText, marginBottom: Spacing.base, textAlign: 'center'}}>Task Approval</Text>
+        <TaskApprovals gardenId={gardenId} key={`approval-${refreshKey}`}/>
+      </View>
+
+      <View style={{marginBottom: Spacing.xxl}}>
+        <Text style={{fontSize: FontSizes.large, fontWeight: '600', color: Colors.darkText, marginBottom: Spacing.base, textAlign: 'center'}}>Completed</Text>
+        <CompletedTasks gardenId={gardenId} key={`completed-${refreshKey}`}/>
       </View>
 
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  scrollContainer: {
-    flex: 1,
-    backgroundColor: '#cad2c5',
-  },
-  container: {
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    paddingTop: 20,
-    padding: 20,
-    width: '100%',
-    paddingBottom: 70
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 20
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2f3e46',
-    marginBottom: 10,
-    textAlign: 'center'
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#2f3e46',
-    marginBottom: 15,
-    textAlign: 'center'
-  },
-  refreshButton: {
-    backgroundColor: '#52796f',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    marginBottom: 10
-  },
-  refreshButtonText: {
-    color: '#2f3e46',
-    fontSize: 16,
-    fontWeight: '600'
-  },
-  section: {
-    marginBottom: 30
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2f3e46',
-    marginBottom: 15,
-    textAlign: 'center'
-  }
-});

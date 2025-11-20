@@ -1,25 +1,27 @@
 import React, { useEffect } from 'react'
-import { Button, View, StyleSheet, Text, Image, Pressable, Dimensions } from 'react-native';
+import { Button, View, Text, Image, Pressable, Dimensions, Modal, ScrollView } from 'react-native';
 import { GardenData } from '../app/(tabs)/gardens';
-import { FIREBASE_AUTH, FIRESTORE_DB } from '../firebaseconfig';
+import { FIREBASE_AUTH } from '../firebaseconfig';
 import { TaskData } from '../app/inputscreens/gardentasklist';
 import { formatDateRange } from '../app/inputscreens/newtask';
-import { doc, getDoc } from "firebase/firestore";
 import { useState } from 'react';
+import { CommonStyles } from '../styles';
+import { Colors, FontFamily, FontSizes, Spacing, BorderRadius } from '../constants';
+import db from '../services/database';
 
 interface TaskCardProps {
     item: TaskData
 }
 
 export default function TaskCard({item}: TaskCardProps) {
-    
+
     const user = FIREBASE_AUTH.currentUser;
     const username = user?.displayName ? user?.displayName : 'Unknown User'
     const userId = user ? user.uid : null
 
-    function stringtoDates(isoString: string) { 
+    function stringtoDates(isoString: string) {
         const strings = isoString.split(" ")
-        const date1 = new Date(strings[0]) 
+        const date1 = new Date(strings[0])
         const date2 = new Date(strings[1])
         return formatDateRange(date1, date2)
     }
@@ -27,19 +29,15 @@ export default function TaskCard({item}: TaskCardProps) {
     const [requestNameList, setRequestNameList] = useState<string>("No one has requested this task.");
     const [assignedNameList, setAssignedNameList] = useState<string>("No one has been assigned to this task.");
 
+    // State for modal
+    const [modalVisible, setModalVisible] = useState(false);
+
 
     async function readNamesAsString(uids: (string | undefined)[]): Promise<string> {
         try {
-          const namePromises = uids.map(async (uid) => {
-            if (!uid) return "No Name";
-            const docRef = doc(FIRESTORE_DB, `users/${uid}`);
-            const docSnap = await getDoc(docRef);
-            const data = docSnap.data();
-            return data?.username || "No Name";
-          });
-      
-          const names = await Promise.all(namePromises);
-          return names.join(", "); // Join usernames into a single string
+          const validUids = uids.filter((uid): uid is string => !!uid);
+          const names = await db.users.getUsernamesByIds(validUids);
+          return names.join(", ");
         } catch (e) {
           console.log(e);
           return "Error fetching names";
@@ -60,112 +58,112 @@ export default function TaskCard({item}: TaskCardProps) {
 
     
 
+    const assignedNames = assignedNameList.split(", ");
+    const requestNames = requestNameList.split(", ");
+
     return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <View style={styles.headerText}>
-                    <Text style={styles.darkTitle}>{item.taskName}</Text>
-                    <Text style={styles.darkSubtitle}>created by {item.username}</Text>
-                    <Text style={styles.darkSubtitle}>{stringtoDates(item.taskTime)}</Text>
-                    <Text style={styles.darkSubtitle}>{item.desc}</Text>
-                    <Text style={styles.darkSubtitle}>{item.location}</Text>
-                    <Text style={styles.darkTitle}>Assigned to: </Text>
-                    {item.uidAssigned.length === 0 || item.uidAssigned[0]==="\0"?
-                    <Text style={styles.noUserText}>No one has been assigned to this task.</Text>:
-                    <View style={styles.userListContainer}>
-                        {assignedNameList.split(", ").map((name, index) => (
-                            <View key={index} style={styles.singleUserContainer}>
-                                <Text style={styles.userText}>{name}</Text>
+        <>
+            {/* Main Card - Pressable to open modal */}
+            <Pressable style={CommonStyles.taskCard} onPress={() => setModalVisible(true)}>
+                <View style={CommonStyles.header}>
+                    <View style={CommonStyles.headerText}>
+                        <Text style={CommonStyles.darkTitle}>{item.taskName}</Text>
+                        <Text style={CommonStyles.darkSubtitle}>created by {item.username}</Text>
+                        <Text style={CommonStyles.darkSubtitle}>{stringtoDates(item.taskTime)}</Text>
+
+                        {/* Description truncated to 3 lines */}
+                        <Text style={CommonStyles.darkSubtitle} numberOfLines={3}>
+                            {item.desc}
+                        </Text>
+
+                        <Text style={CommonStyles.darkSubtitle}>{item.location}</Text>
+
+                        {/* Assigned users - show only first one */}
+                        <Text style={CommonStyles.darkTitle}>Assigned to: </Text>
+                        {item.uidAssigned.length === 0 || item.uidAssigned[0]==="\0"?
+                        <Text style={{fontFamily: FontFamily.regular, color: Colors.darkText, fontSize: FontSizes.small, marginVertical: 4}}>No one has been assigned to this task.</Text>:
+                        <View style={{flexDirection: 'row', flexWrap: 'wrap', marginVertical: Spacing.xs, gap: Spacing.xs}}>
+                            <View style={{backgroundColor: Colors.primaryDark, borderRadius: BorderRadius.large, paddingHorizontal: Spacing.medium, paddingVertical: 6, marginBottom: 4}}>
+                                <Text style={{fontFamily: FontFamily.medium, color: Colors.darkText, fontSize: 12, textAlign: 'center'}}>
+                                    {assignedNames[0]}{assignedNames.length > 1 && ` +${assignedNames.length - 1}`}
+                                </Text>
                             </View>
-                        ))}
-                    </View>}
-                    <Text style={styles.darkTitle}>Requested by: </Text>
-                    {item.uidRequests.length === 0 || item.uidRequests[0]==="\0"?
-                    <Text style={styles.noUserText}>No one has requested this task.</Text>:
-                    <View style={styles.userListContainer}>
-                        {requestNameList.split(", ").map((name, index) => (
-                            <View key={index} style={styles.singleUserContainer}>
-                                <Text style={styles.userText}>{name}</Text>
+                        </View>}
+
+                        {/* Requested users - show only first one */}
+                        <Text style={CommonStyles.darkTitle}>Requested by: </Text>
+                        {item.uidRequests.length === 0 || item.uidRequests[0]==="\0"?
+                        <Text style={{fontFamily: FontFamily.regular, color: Colors.darkText, fontSize: FontSizes.small, marginVertical: 4}}>No one has requested this task.</Text>:
+                        <View style={{flexDirection: 'row', flexWrap: 'wrap', marginVertical: Spacing.xs, gap: Spacing.xs}}>
+                            <View style={{backgroundColor: Colors.primaryDark, borderRadius: BorderRadius.large, paddingHorizontal: Spacing.medium, paddingVertical: 6, marginBottom: 4}}>
+                                <Text style={{fontFamily: FontFamily.medium, color: Colors.darkText, fontSize: 12, textAlign: 'center'}}>
+                                    {requestNames[0]}{requestNames.length > 1 && ` +${requestNames.length - 1}`}
+                                </Text>
                             </View>
-                        ))}
-                    </View>} 
+                        </View>}
+
+                        <Text style={{fontFamily: FontFamily.medium, color: Colors.primaryDark, fontSize: FontSizes.small, marginTop: Spacing.xs, fontStyle: 'italic'}}>Tap to view details</Text>
+                    </View>
                 </View>
-            </View>
-        </View>
+            </Pressable>
+
+            {/* Modal with full task details */}
+            <Modal
+                visible={modalVisible}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={CommonStyles.modalOverlay}>
+                    <View style={CommonStyles.modalContent}>
+                        <ScrollView contentContainerStyle={CommonStyles.modalScrollContent}>
+                            <Text style={CommonStyles.modalTitle}>{item.taskName}</Text>
+                            <Text style={CommonStyles.darkSubtitle}>created by {item.username}</Text>
+                            <Text style={CommonStyles.darkSubtitle}>{stringtoDates(item.taskTime)}</Text>
+
+                            <View style={CommonStyles.modalSection}>
+                                <Text style={CommonStyles.modalSectionTitle}>Description</Text>
+                                <Text style={CommonStyles.darkSubtitle}>{item.desc}</Text>
+                            </View>
+
+                            <View style={CommonStyles.modalSection}>
+                                <Text style={CommonStyles.modalSectionTitle}>Location</Text>
+                                <Text style={CommonStyles.darkSubtitle}>{item.location}</Text>
+                            </View>
+
+                            <View style={CommonStyles.modalSection}>
+                                <Text style={CommonStyles.modalSectionTitle}>Assigned to:</Text>
+                                {item.uidAssigned.length === 0 || item.uidAssigned[0]==="\0"?
+                                <Text style={{fontFamily: FontFamily.regular, color: Colors.darkText, fontSize: FontSizes.small, marginVertical: 4}}>No one has been assigned to this task.</Text>:
+                                <View style={{flexDirection: 'row', flexWrap: 'wrap', marginVertical: Spacing.xs, gap: Spacing.xs}}>
+                                    {assignedNames.map((name, index) => (
+                                        <View key={index} style={{backgroundColor: Colors.primaryDark, borderRadius: BorderRadius.large, paddingHorizontal: Spacing.medium, paddingVertical: 6, marginBottom: 4}}>
+                                            <Text style={{fontFamily: FontFamily.medium, color: Colors.darkText, fontSize: 12, textAlign: 'center'}}>{name}</Text>
+                                        </View>
+                                    ))}
+                                </View>}
+                            </View>
+
+                            <View style={CommonStyles.modalSection}>
+                                <Text style={CommonStyles.modalSectionTitle}>Requested by:</Text>
+                                {item.uidRequests.length === 0 || item.uidRequests[0]==="\0"?
+                                <Text style={{fontFamily: FontFamily.regular, color: Colors.darkText, fontSize: FontSizes.small, marginVertical: 4}}>No one has requested this task.</Text>:
+                                <View style={{flexDirection: 'row', flexWrap: 'wrap', marginVertical: Spacing.xs, gap: Spacing.xs}}>
+                                    {requestNames.map((name, index) => (
+                                        <View key={index} style={{backgroundColor: Colors.primaryDark, borderRadius: BorderRadius.large, paddingHorizontal: Spacing.medium, paddingVertical: 6, marginBottom: 4}}>
+                                            <Text style={{fontFamily: FontFamily.medium, color: Colors.darkText, fontSize: 12, textAlign: 'center'}}>{name}</Text>
+                                        </View>
+                                    ))}
+                                </View>}
+                            </View>
+                        </ScrollView>
+
+                        <Pressable style={CommonStyles.closeButton} onPress={() => setModalVisible(false)}>
+                            <Text style={CommonStyles.closeButtonText}>Close</Text>
+                        </Pressable>
+                    </View>
+                </View>
+            </Modal>
+        </>
     )
 }
-
-const screenWidth = Dimensions.get('window').width;
-
-const styles = StyleSheet.create({
-    container: {
-        flexDirection: 'column',
-        justifyContent: 'flex-start',
-        backgroundColor: '#84a98c',
-        borderRadius: 10,
-        marginBottom: 20,
-        paddingTop: 10,
-        paddingBottom: 10,
-        // width: screenWidth * 0.8
-    },
-    darkSubtitle: {
-        fontFamily: 'Quicksand-Regular',
-        color: '#2f3e46',
-        fontSize: 13,
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'flex-start',
-        padding: 15,
-    },
-    headerText: {
-        flexDirection: 'column',
-        justifyContent: 'center',
-        marginLeft: 10,
-    },
-    darkTitle: {
-        fontFamily: 'Quicksand-Bold',
-        color: '#2f3e46',
-        fontSize: 17,
-    },
-    userListContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        marginVertical: 8,
-        gap: 8,
-    },
-    singleUserContainer: {
-        backgroundColor: '#52796f',
-        borderRadius: 20,
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        marginBottom: 4,
-    },
-    userText: {
-        fontFamily: 'Quicksand-Medium',
-        color: '#2f3e46',
-        fontSize: 12,
-        textAlign: 'center',
-    },
-    noUserText: {
-        fontFamily: 'Quicksand-Regular',
-        color: '#2f3e46',
-        fontSize: 13,
-        marginVertical: 4,
-    },
-    assignedUser: {
-        alignItems: 'center',
-        borderRadius: 30,
-        backgroundColor: '#52796f',
-        padding: 8,
-        margin: 8,
-        width: '90%'
-    },
-    requestUser: {
-        alignItems: 'center',
-        borderRadius: 30,
-        backgroundColor: '#cad2c5',
-        padding: 8,
-        margin: 8,
-    }
-  });

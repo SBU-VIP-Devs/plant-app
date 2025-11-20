@@ -1,11 +1,10 @@
 import 'react-native-gesture-handler';
 import 'expo-dev-client';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Button, Image, FlatList, ImageBackground, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import { Text, View, Button, Image, FlatList, ImageBackground, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { Link } from 'expo-router';
 import { useLocalSearchParams } from 'expo-router';
 import { FIREBASE_AUTH } from '../../firebaseconfig';
-import { signOut } from 'firebase/auth';
 
 
 // import { collection, getDocs } from "firebase/firestore";
@@ -15,14 +14,13 @@ import { signOut } from 'firebase/auth';
 import { useState, useEffect } from 'react';
 import { DataTable } from 'react-native-paper';
 import TaskCard from '../../components/TaskCard'
-import { QuerySnapshot, collection, getDocs, onSnapshot} from "firebase/firestore";
-import { FIRESTORE_DB } from '../../firebaseconfig';
 import NewTask from '../inputscreens/newtask';
-// import GardenSettings from '../../inputscreens/gardensettings';
 
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import EditProfile from "../editProfile";
+import { Colors, FontSizes, Spacing, BorderRadius } from '../../constants';
+import db from '../../services/database';
 
 const Stack = createNativeStackNavigator();
 
@@ -74,83 +72,36 @@ export default function Users() {
  //READS TASKLIST FROM FIREBASE
 
 
-  const getProfile = async () => { //getProfile var is a function
+  const getProfile = async () => {
    try {
-     // const list: any = []
+     const profiles = await db.users.getAllProfiles();
+
      const list: {
        id: string; title: string; bio?: string
-       ; vHours?: string; actvDate?: string; actvDet?: string; actvLoc?: string
+       ; vHours?: number; actvDate?: string; actvDet?: string; actvLoc?: string
      }[] = [];
-     //const list: { id: string; title: string; name?: string; school?: string }[] = [];
 
-
-     //change the path in the collection function to reflect the path to the collection you want (i hard coded a garden id)
-     const querySnapshot = await getDocs(collection(FIRESTORE_DB, `profiles`));
-
-
-
-
-     querySnapshot.forEach((doc) => {
-       //THIS SHOULD MATCH THE FORMAT OF THE FIELDS BC ITS READING FROM ALL THE DATA (not just some)
-
-
-       // ADD FIELD U WANT HERE
-       const {
-         bio,
-         // email,
-         // fname,
-
-
-         role,
-
-
-         vHours,
-         actvDate,
-         actvDet,
-         actvLoc
-       } = doc.data()
-
-
-
-
-       // list.push({ bio, email, fname, lname, vHours, actvDate, actvDet, actvLoc});
-
+     profiles.forEach((profile) => {
+       const { id, bio, role, vHours, actvDate, actvDet, actvLoc } = profile;
 
        if (role && Array.isArray(role)) {
          role.forEach((item: string, index: number) => {
-           list.push({ id: `${doc.id}-${index}`, title: item, bio, vHours, actvDate, actvDet, actvLoc }); // Create a unique ID for each list item
+           list.push({ id: `${id}-${index}`, title: item, bio, vHours, actvDate, actvDet, actvLoc });
          });
        }
-
-
-       //PUSH THE VALUES OF INTEREST
      });
-
 
      setRole(list);
 
-
-     if (!querySnapshot.empty) {
-       //sets each value individually
-
-
-       //SET VALUES HERE
-       const firstItem = querySnapshot.docs[0].data(); // Assuming you want to display the first document's data
-       if (firstItem) {
-         setBio(firstItem.bio);
-         // setFname(firstItem.fname);
-         // setLname(firstItem.lname);
-         // setEmail(firstItem.email);
-         // setRole(firstItem.role);
-         setHours(firstItem.vHours);
-         setDate(firstItem.actvDate);
-         setDetail(firstItem.actvDet);
-         setLoc(firstItem.actvLoc);
-         // setRole(firstItem.role);
-
-
+     if (profiles.length > 0) {
+       const firstProfile = profiles[0];
+       if (firstProfile) {
+         setBio(firstProfile.bio || null);
+         setHours(firstProfile.vHours || 0);
+         setDate(firstProfile.actvDate || null);
+         setDetail(firstProfile.actvDet || "No details provided");
+         setLoc(firstProfile.actvLoc || null);
        }
-
      }
    } catch (e) {
      console.log(e)
@@ -176,7 +127,7 @@ export default function Users() {
 
 
  return (
-   <View style={styles.container}>
+   <View style={{flex: 1, backgroundColor: Colors.lightBackground, justifyContent: 'flex-start'}}>
      <ScrollView>
        <ImageBackground style={{ height: 125, opacity: 0.7, }}
          source={require('../../assets/gardens/garden1.jpeg')}
@@ -185,15 +136,15 @@ export default function Users() {
 
        <View style={{ paddingLeft: 25, paddingRight: 25 }}>
          <View style={{ alignItems: 'center', marginTop: -45, }}>
-           <Image source={require('../../assets/flower.jpg')} style={styles.profilepic} />
-           <Text style={styles.name}>{fnameLocal}</Text>
-           <Text style={styles.email}>{emailLocal}</Text>
-           {/* <Text style={styles.email}>{user?.email}</Text> */}
+           <Image source={require('../../assets/flower.jpg')} style={{height: 100, width: 100, borderRadius: 100, borderWidth: 4, borderColor: Colors.primaryDark}} />
+           <Text style={{fontWeight: "bold", fontSize: FontSizes.title, color: Colors.darkText}}>{fnameLocal}</Text>
+           <Text style={{fontWeight: "bold", color: Colors.primaryDark}}>{emailLocal}</Text>
+           {/* <Text style={{fontWeight: "bold", color: Colors.primaryDark}}>{user?.email}</Text> */}
          </View>
 
 
-         <Text style={styles.bioTitle}>Bio:</Text>
-         <Text style={styles.bio}>{bioLocal}</Text>
+         <Text style={{marginTop: Spacing.small, fontSize: FontSizes.body, textAlign: "left", textDecorationLine: 'underline', fontWeight: "bold"}}>Bio:</Text>
+         <Text style={{paddingLeft: Spacing.small, fontSize: FontSizes.body, marginBottom: Spacing.large}}>{bioLocal}</Text>
          <View style={{ height: 28 }}>
 
 
@@ -205,7 +156,7 @@ export default function Users() {
 */}
            <ScrollView horizontal={true}>
              {roleLocal.map((role) => (
-               <View key={role.id} style={styles.tags}>
+               <View key={role.id} style={{backgroundColor: Colors.primaryDark, marginLeft: Spacing.small, height: 20, justifyContent: "center", paddingLeft: Spacing.small, paddingRight: Spacing.small, borderRadius: BorderRadius.small}}>
                  <Text style={{ color: "#cad2c5", fontWeight: "bold" }}>{String(role.title)}</Text>
                </View>
              ))}
@@ -224,11 +175,11 @@ export default function Users() {
 
 
 
-         <View style={styles.buttonContainer}>
+         <View style={{paddingBottom: Spacing.small, justifyContent: 'center', alignItems: 'center', color: Colors.darkText}}>
            {/* <Text>Test</Text> */}
            <View>
-             {/* <TouchableOpacity style={styles.editButton} onPress={() => setEditClicked(true)}>  */}
-             <TouchableOpacity style={styles.editButton} onPress={show}>
+             {/* <TouchableOpacity style={{backgroundColor: Colors.primary, marginBottom: 15, marginLeft: 235, alignItems: "center", justifyContent: "center", borderRadius: BorderRadius.small, height: 20, width: 90}} onPress={() => setEditClicked(true)}>  */}
+             <TouchableOpacity style={{backgroundColor: Colors.primary, marginLeft: 235, alignItems: "center", justifyContent: "center", borderRadius: BorderRadius.small, height: 20, width: 90}} onPress={show}>
 
 
                {/* onPress={show} */}
@@ -265,15 +216,15 @@ export default function Users() {
 
 
 
-         <View style={styles.totalHours}>
+         <View style={{backgroundColor: Colors.primary, height: 70, borderRadius: BorderRadius.small, justifyContent: "center", alignItems: "center", marginBottom: Spacing.small}}>
 
 
            {
              hoursLocal > 0 ? (
-               <Text style={{ fontSize: 22, color: "#354f52", fontWeight: "bold", textAlign: "center" }}>{hoursLocal} Hours Volunteered!{"\n"}
-                 <Text style={{ fontStyle: 'italic', fontWeight: "normal", fontSize: 15, }}>Keep up the good work!</Text>
+               <Text style={{ fontSize: FontSizes.title, color: Colors.primaryDark, fontWeight: "bold", textAlign: "center" }}>{hoursLocal} Hours Volunteered!{"\n"}
+                 <Text style={{ fontStyle: 'italic', fontWeight: "normal", fontSize: FontSizes.body, }}>Keep up the good work!</Text>
                </Text>
-             ) : (<Text style={{ fontStyle: 'italic', fontWeight: "normal", fontSize: 15, }}>No Hours Yet!</Text>)}
+             ) : (<Text style={{ fontStyle: 'italic', fontWeight: "normal", fontSize: FontSizes.body, }}>No Hours Yet!</Text>)}
 
 
          </View>
@@ -296,7 +247,7 @@ export default function Users() {
 
 
 
-         <Button title="Sign out" onPress={() => signOut(FIREBASE_AUTH)} />
+         <Button title="Sign out" onPress={() => db.auth.signOut()} />
 
 
        </View>
@@ -314,139 +265,3 @@ export default function Users() {
 
  );
 }
-
-
-const styles = StyleSheet.create({
- container: {
-   flex: 1,
-   backgroundColor: '#cad2c5',
-   justifyContent: 'flex-start',
-   // paddingLeft:30,
-   // paddingRight: 30,
-   // padding: 30,
- },
-
-
- name: {
-   fontWeight: "bold",
-   fontSize: 22,
-   color: "#2f3e46",
- },
-
-
- email: {
-   fontWeight: "bold",
-   color: "#52796f",
- },
-
-
- profilepic: {
-   height: 100,
-   width: 100,
-   borderRadius: 100,
-   borderWidth: 4,
-   borderColor: "#354f52",
- },
-
-
- bioTitle: {
-   marginTop: 8,
-   fontSize: 15,
-   textAlign: "left",
-   textDecorationLine: 'underline',
-   fontWeight: "bold",
- },
-
-
- bio: {
-   paddingLeft: 10,
-   fontSize: 15,
-   marginBottom: 15,
- },
-
-
- tags: {
-   backgroundColor: "#52796f",
-   marginLeft: 5,
-   height: 20,
-   justifyContent: "center",
-   paddingLeft: 5,
-   paddingRight: 5,
-   borderRadius: 8,
- },
-
-
- editButton: {
-   backgroundColor: "#84a98c",
-   // marginBottom: 15,
-   marginLeft: 235,
-   alignItems: "center",
-   justifyContent: "center",
-   borderRadius: 5,
-   height: 20,
-   width: 90,
- },
-
-
- totalHours: {
-   backgroundColor: "#84a98c",
-   height: 70,
-   borderRadius: 8,
-   justifyContent: "center",
-   alignItems: "center",
-   marginBottom: 10,
- },
-
-
- activity: {
-   backgroundColor: "#84a98c",
-   height: 145,
-   borderRadius: 8,
-   // justifyContent: "center",
- },
-
-
- actDetails: {
-   backgroundColor: "#aaaaaa",
- },
-
-
- actImage: {
-   width: 95,
-   height: 95,
-   marginRight: 10,
-   marginLeft: 10,
-   borderRadius: 8,
- },
- buttonContainer: {
-   // Added padding to ensure the button is not cramped
-   paddingBottom: 10,
-   justifyContent: 'center', // Center the button
-   alignItems: 'center', // Center the button horizontally
-   color: "#000000",
- },
-
-
- test: {
-   // width: 200,
-   // height: 200,
-   // justifyContent: 'center',
-   // alignItems: 'center',
-   // borderWidth: 2,            // Thickness of the border
-   // borderColor: '#000',       // Color of the border
-   // borderRadius: 10,          // Rounded corners (optional)
-   // padding: 20,     
-   // fontSize: 2,
-   backgroundColor: "#84a98c",
-   marginBottom: 15,
-   marginLeft: 235,
-   alignItems: "center",
-   justifyContent: "center",
-   borderRadius: 5,
-   height: 20,
-   width: 100,
- }
-
-
-});
-

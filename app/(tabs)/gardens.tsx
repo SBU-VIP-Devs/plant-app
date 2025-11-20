@@ -2,16 +2,17 @@ import 'react-native-gesture-handler';
 import 'expo-dev-client';
 import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Button, FlatList, Modal, Pressable, RefreshControl } from 'react-native';
+import { Text, View, Button, FlatList, Modal, Pressable, RefreshControl } from 'react-native';
 import GardenCard from '../../components/GardenCard';
 import { Link } from 'expo-router';
 import NewGarden from '../inputscreens/newgarden';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FIRESTORE_DB } from '../../firebaseconfig';
-import { QuerySnapshot, collection, getDocs } from "firebase/firestore";
 import { FIREBASE_AUTH } from '../../firebaseconfig';
 import GardenSettings from '../inputscreens/gardensettings';
 import GardenDetails from '../inputscreens/gardendetails';
+import { CommonStyles } from '../../styles';
+import { Colors, FontSizes, FontFamily, Spacing, BorderRadius } from '../../constants';
+import db from '../../services/database';
 
 export interface GardenData {
     id: string;
@@ -36,35 +37,21 @@ export default function Gardens() {
     const [gardenList, updateGardenList] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    const getGardenList = async () => { 
+    const getGardenList = async () => {
         try {
-            const list: any = []
-            const querySnapshot = await getDocs(collection(FIRESTORE_DB, "garden-post-info")) 
-            querySnapshot.forEach((doc) => {
-                // doc.data() is never undefined for query doc snapshots
-                //console.log(doc.id, " => ", doc.data());
-                const {userId, createdAt, gardenName, desc, imageURL, username, roles} = doc.data()
-                list.push({ 
-                    id: doc.id,
-                    userId,
-                    userImage: "https://firebasestorage.googleapis.com/v0/b/plantapp-3d30d.appspot.com/o/GardenImages%2F1719431663739?alt=media&token=f53cdd64-a1ef-42f7-877a-432939b3867b",
-                    //add whether user joined locally
-                    joined: false,
-                    createdAt,
-                    gardenName,
-                    desc,
-                    imageURL,
-                    username,
-                    roles
-                })
-            });
-            updateGardenList(list)
+            const gardens = await db.gardens.getAllGardens();
+
+            const list = gardens.map(garden => ({
+                ...garden,
+                userImage: "https://firebasestorage.googleapis.com/v0/b/plantapp-3d30d.appspot.com/o/GardenImages%2F1719431663739?alt=media&token=f53cdd64-a1ef-42f7-877a-432939b3867b",
+                joined: false
+            }));
+
+            updateGardenList(list as any)
 
             if(loading) {
                 setLoading(false)
             }
-
-            // console.log('posts: ', list)
         } catch(e) {
             console.log(e)
         }
@@ -120,25 +107,39 @@ export default function Gardens() {
       };
 
     return (
-        <View style={styles.container}>
+        <View style={CommonStyles.fullScreenContainer}>
             <FlatList
                 style={{width: '90%'}}
                 data={gardenList}
                 renderItem={({item}: {item: GardenData}) => {
                     return (
-                        <View style={styles.cardContainer}>
+                        <View style={CommonStyles.cardContainer}>
                             <GardenCard item={item} key={item.id}/>
                             {(userId?item.roles[userId]==="admin":false) &&
                             <View style={{alignItems: 'center'}}>
-                                <Pressable style={styles.leaveButton} onPress={() => handleOpenSettings(item.id)}>
-                                    <Text style={styles.lightTitle}>Garden Settings</Text>
-                                </Pressable> 
+                                <Pressable style={{
+                                  alignItems: 'center',
+                                  borderRadius: BorderRadius.xl,
+                                  backgroundColor: Colors.primaryDark,
+                                  width: '50%',
+                                  padding: Spacing.xs,
+                                  margin: Spacing.xs,
+                                }} onPress={() => handleOpenSettings(item.id)}>
+                                    <Text style={{fontFamily: FontFamily.bold, color: Colors.darkText, fontSize: FontSizes.subtitle}}>Garden Settings</Text>
+                                </Pressable>
                             </View>}
                             <View style={{alignItems: 'center'}}>
-                                <Pressable style={styles.leaveButton} onPress={() => handleOpenDetails(item.id)}>
-                                    {/* <Text style={styles.lightTitle}>Garden Details {item.id}</Text> */}
-                                    <Text style={styles.lightTitle}>Garden Details</Text>
-                                </Pressable> 
+                                <Pressable style={{
+                                  alignItems: 'center',
+                                  borderRadius: BorderRadius.xl,
+                                  backgroundColor: Colors.primaryDark,
+                                  width: '50%',
+                                  padding: Spacing.xs,
+                                  margin: Spacing.xs,
+                                }} onPress={() => handleOpenDetails(item.id)}>
+                                    {/* <Text style={{fontFamily: FontFamily.bold, color: Colors.darkText, fontSize: FontSizes.subtitle}}>Garden Details {item.id}</Text> */}
+                                    <Text style={{fontFamily: FontFamily.bold, color: Colors.darkText, fontSize: FontSizes.subtitle}}>Garden Details</Text>
+                                </Pressable>
                             </View>
                         </View>
                     )
@@ -187,41 +188,3 @@ export default function Gardens() {
         </View>
     );
 }
-
-const styles = StyleSheet.create({
-  
-    container: {
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    paddingTop: 20,
-    alignItems: 'center',
-    flex: 1,
-    backgroundColor: '#cad2c5',
-    },
-    cardContainer: {
-        flexDirection: 'column',
-        justifyContent: 'flex-start',
-        backgroundColor: '#84a98c',
-        width: '100%',
-        borderRadius: 10,
-        marginBottom: 20,
-    },
-    leaveButton: {
-        alignItems: 'center',
-        borderRadius: 30,
-        backgroundColor: '#52796f',
-        width: '50%',
-        padding: 8,
-        margin: 8,
-    },
-    lightTitle: {
-        fontFamily: 'Quicksand-Bold',
-        color: '#2f3e46',
-        fontSize: 17,
-    },
-    lightSubtitle: {
-        fontFamily: 'Quicksand-Regular',
-        color: '#2f3e46',
-        fontSize: 13,
-    },
-});

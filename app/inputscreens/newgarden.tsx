@@ -1,15 +1,15 @@
 import 'react-native-gesture-handler';
 import 'expo-dev-client';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Button, TextInput, Pressable, Image, Platform, Alert } from 'react-native';
+import { Text, View, Button, TextInput, Pressable, Image, Platform, Alert } from 'react-native';
 import { useState, useEffect } from 'react';
 import { KeyboardAvoidingView } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
 import ProgressBar from '../../components/ProgressBar';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { addDoc, collection, onSnapshot } from 'firebase/firestore';
-import { FIREBASE_STORAGE, FIRESTORE_DB } from '../../firebaseconfig';
 import { FIREBASE_AUTH } from '../../firebaseconfig';
+import { CommonStyles } from '../../styles';
+import { Colors, Spacing, BorderRadius } from '../../constants';
+import db from '../../services/database';
 
 export default function NewGarden() {
 
@@ -62,10 +62,10 @@ export default function NewGarden() {
       });
     }
     
-    async function uploadGardenRecord(imageURL: string | null, createdAt: string, 
+    async function uploadGardenRecord(imageURL: string | null, createdAt: string,
       gardenName: string, desc: string, username: string, userId: string | null, roles: {[key: string]: string} | null) {
       try {
-        const docRef = await addDoc(collection(FIRESTORE_DB, 'garden-post-info'), {
+        const gardenId = await db.gardens.createGarden({
           imageURL,
           createdAt,
           gardenName,
@@ -73,11 +73,8 @@ export default function NewGarden() {
           username,
           userId,
           roles
-          //userImage,
-          //add whether user joined locally, when creating local list, not here
-          //add these here and to the top of uploadGardenRecord ^^
         })
-        console.log('Document saved correctly.', docRef.id)
+        console.log('Document saved correctly.', gardenId)
         Alert.alert('Garden created successfully!')
       } catch(e) {
         console.log(e)
@@ -86,48 +83,40 @@ export default function NewGarden() {
 
     const uploadGardenPost = async () => {
       if(image) {
-        const response = await fetch(image);
-        //converts to binary large object (blob) to send to db
-        const blob = await response.blob();
+        try {
+          setUploading(true)
+          const storagePath = 'GardenImages/IMG_' + new Date().getTime()
 
-        const storageRef = ref(FIREBASE_STORAGE, 'GardenImages/IMG_' + new Date().getTime())
-        const uploadTask = uploadBytesResumable(storageRef, blob)
+          const downloadURL = await db.storage.uploadImage(
+            storagePath,
+            image,
+            (progress) => {
+              console.log('Upload is ' + progress.percentage + '% done')
+              setProgress(Math.floor(progress.percentage))
+            }
+          )
 
-        //listen for events
-        uploadTask.on('state_changed',
-          (snapshot) => {
-            setUploading(true)
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-            console.log('Upload is ' + progress + '% done')
-            setProgress(Math.floor(progress))
-          },
-          (error) => {
-            console.log(error)
-          },
-          () => {
-            getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
-              console.log('File available at', downloadURL);
-              //save record
-              //TODO: save profile pics per user and extract them from users
-              await uploadGardenRecord(downloadURL, new Date().toISOString(), name, desc, username, userId, userList)
-              
-              setUploading(false)
-              setImage('')
-            })
-          }
-        )
+          console.log('File available at', downloadURL);
+          await uploadGardenRecord(downloadURL, new Date().toISOString(), name, desc, username, userId, userList)
+
+          setUploading(false)
+          setImage('')
+        } catch (error) {
+          console.log(error)
+          setUploading(false)
+        }
       } else {
         await uploadGardenRecord(null, new Date().toISOString(), name, desc, username, userId, userList)
       }
     }
     
     return (
-      <View style={styles.container}>
-        <Text style={styles.header}>New Garden Setup</Text>
+      <View style={CommonStyles.screenContainer}>
+        <Text style={CommonStyles.pageHeader}>New Garden Setup</Text>
         <KeyboardAvoidingView behavior='padding'>
         <TextInput
         value={name}
-        style={styles.input}
+        style={CommonStyles.textInput}
         placeholder="New Garden Name"
         autoCapitalize='none'
         onChangeText={(text) => {
@@ -136,7 +125,7 @@ export default function NewGarden() {
         />
         <TextInput
         value={desc}
-        style={styles.input}
+        style={CommonStyles.textInput}
         placeholder="New Garden Description"
         autoCapitalize='none'
         multiline={true}
@@ -148,70 +137,26 @@ export default function NewGarden() {
         />
         <StatusBar style="auto" />
         </KeyboardAvoidingView>
-        <View style={{alignItems: 'center'}}>
-          {image && <Image 
-            style={{width: 300, height: 300, marginTop: 10, borderRadius: 10}} 
+        <View style={CommonStyles.centeredView}>
+          {image && <Image
+            style={CommonStyles.thumbnailImage}
             source={{ uri: image }}
           />}
-          <Pressable style={styles.button} onPress = {choosePhotoFromLibrary}>
-              <Text style={styles.text}>Photo Library</Text>
+          <Pressable style={CommonStyles.primaryButton} onPress = {choosePhotoFromLibrary}>
+              <Text style={CommonStyles.buttonText}>Photo Library</Text>
           </Pressable>
-          <Pressable style={styles.button} onPress = {takePhotoFromCamera}>
-              <Text style={styles.text}>Camera</Text>
+          <Pressable style={CommonStyles.primaryButton} onPress = {takePhotoFromCamera}>
+              <Text style={CommonStyles.buttonText}>Camera</Text>
           </Pressable>
-          <Pressable style={styles.button} onPress = {uploadGardenPost}>
-              <Text style={styles.text}>Create Garden!</Text>
+          <Pressable style={CommonStyles.primaryButton} onPress = {uploadGardenPost}>
+              <Text style={CommonStyles.buttonText}>Create Garden!</Text>
           </Pressable>
-          {uploading && 
-          <View style={{marginTop: 10, alignItems: 'center'}}>
-            <Text style={styles.text}>Uploading...</Text>
+          {uploading &&
+          <View style={{marginTop: Spacing.small, alignItems: 'center'}}>
+            <Text style={CommonStyles.buttonText}>Uploading...</Text>
             <ProgressBar progress={progress}/>
           </View>}
         </View>
       </View>
     );
   }
-  
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: '#cad2c5',
-      //alignItems: 'center',
-      //justifyContent: 'center',
-      padding: 15,
-    },
-    button: {
-      alignItems: 'center',
-      borderRadius: 30,
-      backgroundColor: '#84a98c',
-      width: '50%',
-      padding: 8,
-      marginTop: 10,
-   },
-    header: {
-      fontSize: 30,
-      lineHeight: 42,
-      fontWeight: 'bold',
-      letterSpacing: 0.25,
-      textAlign: 'left',
-      color: '#2f3e46',
-    },
-    input: {
-      marginTop: 7,
-      fontSize: 15, 
-      color: '#2f3e46',
-      backgroundColor: 'white',
-      borderWidth: 2,
-      borderColor: '#2f3e46',
-      borderRadius: 10,
-      paddingVertical: 12,
-      paddingHorizontal: 12,
-    },
-    text: {
-      fontSize: 16,
-      lineHeight: 21,
-      fontWeight: 'bold',
-      letterSpacing: 0.25,
-      color: '#2f3e46',
-    },
-  });

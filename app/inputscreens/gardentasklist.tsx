@@ -1,13 +1,14 @@
 import 'react-native-gesture-handler';
 import 'expo-dev-client';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Button, FlatList, Modal, RefreshControl } from 'react-native';
+import { Text, View, Button, FlatList, Modal, RefreshControl } from 'react-native';
 import { useState, useEffect } from 'react';
 import { DataTable } from 'react-native-paper';
 import TaskCard from '../../components/TaskCard'
-import { QuerySnapshot, collection, getDocs } from "firebase/firestore";
-import { FIRESTORE_DB } from '../../firebaseconfig';
 import NewTask from '../inputscreens/newtask';
+import { CommonStyles } from '../../styles';
+import { Colors, FontSizes, Spacing } from '../../constants';
+import db from '../../services/database';
 
 
 export interface TaskData {
@@ -20,6 +21,7 @@ export interface TaskData {
   username: string,
   uidAssigned: string[],
   uidRequests: string[],
+  taskStatus?: 'open' | 'assigned' | 'approval' | 'completed',
 };
 
 interface TaskListProps {
@@ -34,46 +36,20 @@ export default function TaskList({ gardenId, onRefresh }: TaskListProps) {
     const [loading, setLoading] = useState(true);
 
     //READS TASKLIST FROM FIREBASE
-    const getTaskList = async () => { 
-        try { 
-            const list: any = []
-            const querySnapshot = await getDocs(collection(FIRESTORE_DB, `garden-post-info/${gardenId}/garden-tasks`)) 
-            querySnapshot.forEach((doc) => {
-                // doc.data() is never undefined for query doc snapshots
-                //console.log(doc.id, " => ", doc.data());
-                const {
-                  id,
-                  desc,
-                  gardenId,
-                  location,
-                  taskName,
-                  taskTime,
-                  uidAssigned,
-                  uidRequests,
-                  username
-                } = doc.data()
-                 
-                list.push({ 
-                    id: doc.id,
-                    desc,
-                    gardenId,
-                    location,
-                    taskName,
-                    taskTime,
-                    uidAssigned,
-                    uidRequests,
-                    username
-                })
-            });
-            if(!querySnapshot.empty) {
-                updateTaskList(list)
+    const getTaskList = async () => {
+        try {
+            if (!gardenId) return;
+
+            // Get tasks with status 'open' or 'assigned'
+            const tasks = await db.tasks.getTasksByStatus(gardenId, ['open', 'assigned']);
+
+            if(tasks.length > 0) {
+                updateTaskList(tasks as any)
             }
 
             if(loading) {
                 setLoading(false)
             }
-
-            // console.log('posts: ', list)
         } catch(e) {
             console.log(e)
         }
@@ -103,14 +79,14 @@ export default function TaskList({ gardenId, onRefresh }: TaskListProps) {
           <FlatList
             data={taskList}
             renderItem={({item}: {item: TaskData}) => {
-                return <View style={styles.taskCardContainer}><TaskCard item={item} key={item.id}/></View>
+                return <View style={CommonStyles.taskCardContainer}><TaskCard item={item} key={item.id}/></View>
             }}
             keyExtractor={item => item.id}
             horizontal={true}
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalList}
+            contentContainerStyle={CommonStyles.horizontalList}
           />:
-          <Text style={styles.noTasksText}>No tasks! Click the button below to create one.</Text>
+          <Text style={CommonStyles.noContentText}>No tasks! Click the button below to create one.</Text>
         }
       </View>
       <Button title='New Task +' onPress={show}/>
@@ -132,27 +108,3 @@ export default function TaskList({ gardenId, onRefresh }: TaskListProps) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    paddingTop: 20,
-    alignItems: 'center',
-    flex: 1,
-    backgroundColor: '#cad2c5',
-  },
-  horizontalList: {
-    paddingHorizontal: 10,
-  },
-  taskCardContainer: {
-    marginRight: 15,
-    width: 280,
-  },
-  noTasksText: {
-    textAlign: 'center',
-    color: '#2f3e46',
-    fontSize: 16,
-    marginVertical: 20,
-  },
-});

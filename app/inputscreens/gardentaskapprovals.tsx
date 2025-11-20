@@ -11,8 +11,7 @@ import db from '../../services/database';
 
 // for ONE garden...need to scan thru all the tasks and get all the uid requests
 
-export default function TaskRequests({ gardenId, onRefresh }: GardenSettingsProps & { onRefresh?: () => void }) {
-
+export default function TaskApprovals({ gardenId, onRefresh }: GardenSettingsProps & { onRefresh?: () => void }) {
 
   // TO CONVERT UID TO ACTUAL USERNAMES (in case they change their usernames)
   async function readNameAsString(uid: string | undefined): Promise<string> {
@@ -38,10 +37,10 @@ export default function TaskRequests({ gardenId, onRefresh }: GardenSettingsProp
       let requests: TaskRequestProps[] = [];
 
       for (const task of tasks) {
-        const { taskName, taskTime, uidRequests, id } = task;
+        const { taskName, taskTime, uidPendingApproval, id } = task;
 
-        if (uidRequests && Array.isArray(uidRequests)) {
-          for (const requester of uidRequests) {
+        if (uidPendingApproval && Array.isArray(uidPendingApproval)) {
+          for (const requester of uidPendingApproval) {
             const uidToUsername = await readNameAsString(requester);
             const requestId = Math.random().toString(36).substring(2, 9);
             requests.push({
@@ -80,14 +79,14 @@ export default function TaskRequests({ gardenId, onRefresh }: GardenSettingsProp
   };
 
   //REMOVE UID FROM REQUEST LIST
-  async function removeFromRequested(uid: string | undefined, taskId: string) {
+  async function removeFromPending(uid: string | undefined, taskId: string) {
     try {
       if (!uid || !gardenId) return;
 
-      await db.tasks.removeUserFromRequests(gardenId, taskId, uid);
+      await db.tasks.removeUserFromPending(gardenId, taskId, uid);
 
       console.log('User removed from array correctly.', taskId)
-      Alert.alert('Task declined successfully!')
+      Alert.alert('Removed from pending and status updated.')
     } catch(e) {
       console.log(e)
       console.log("may be invalid user.")
@@ -95,66 +94,38 @@ export default function TaskRequests({ gardenId, onRefresh }: GardenSettingsProp
     refreshTaskRequests()
   }
 
-
   //ADD UID TO ASSIGNED LIST
   async function addToAssigned(uid: string | undefined, taskId: string) {
-      try {
-        if (!uid || !gardenId) return;
-
-        await db.tasks.addUserToAssigned(gardenId, taskId, uid);
-        await db.tasks.updateTaskStatus(gardenId, taskId, 'assigned');
-
-        console.log('User added to assigned array correctly.', taskId)
-        Alert.alert('Task assigned successfully!')
-      } catch(e) {
-        console.log(e)
-        console.log("may be invalid user.")
-      }
-      refreshTaskRequests()
-    }
-
-  async function addToUserTaskList(uid: string | undefined, taskId: string) {
     try {
-      if (!uid || !gardenId) {
-        console.log("No user ID or garden ID provided");
-        return;
-      }
+      if (!uid || !gardenId) return;
 
-      // Get the task data
-      const task = await db.tasks.getTaskById(gardenId, taskId);
+      await db.tasks.addUserToAssigned(gardenId, taskId, uid);
+      await db.tasks.updateTaskStatus(gardenId, taskId, 'assigned');
 
-      if (!task) {
-        console.log("Task document does not exist");
-        return;
-      }
-
-      const { taskName, taskTime, desc, location, username } = task;
-
-      // Parse taskTime to get start and end times
-      const timeParts = taskTime.split(" ");
-      const taskStartTime = timeParts[0] || "";
-      const taskEndTime = timeParts[1] || "";
-
-      // Create task record in user's task list
-      const userTaskData = {
-        taskId: taskId,
-        gardenId: gardenId,
-        taskCreator: username || "",
-        taskDesc: desc || "",
-        taskEndTime: taskEndTime,
-        taskIsDone: false,
-        taskLocation: location || "",
-        taskName: taskName || "",
-        taskStartTime: taskStartTime,
-        uidAssigned: [uid]
-      };
-
-      await db.users.addTaskToUserList(uid, taskId, userTaskData);
-
-      console.log('User task record created successfully');
+      console.log('User added to assigned array correctly.', taskId)
+      Alert.alert('Task unapproved successfully!')
     } catch(e) {
-      console.log("Error creating user task record:", e);
+      console.log(e)
+      console.log("may be invalid user.")
     }
+    refreshTaskRequests()
+  }
+
+  //ADD UID TO COMPLETED LIST
+  async function addToCompleted(uid: string | undefined, taskId: string) {
+    try {
+      if (!uid || !gardenId) return;
+
+      await db.tasks.addUserToCompleted(gardenId, taskId, uid);
+      await db.tasks.updateTaskStatus(gardenId, taskId, 'completed');
+
+      console.log('User added to completed array correctly.', taskId)
+      Alert.alert('Task completed successfully!')
+    } catch(e) {
+      console.log(e)
+      console.log("may be invalid user.")
+    }
+    refreshTaskRequests()
   }
 
 
@@ -180,10 +151,10 @@ export default function TaskRequests({ gardenId, onRefresh }: GardenSettingsProp
                   padding: Spacing.xs,
                   margin: Spacing.xs,
                 }} onPress={async () => {
-                  await removeFromRequested(item.requesterId, item.taskId);
-                  await addToAssigned(item.requesterId, item.taskId);
-                  await addToUserTaskList(item.requesterId, item.taskId);
-                  console.log('accepted users task request')
+                  await removeFromPending(item.requesterId, item.taskId);
+                  await addToCompleted(item.requesterId, item.taskId);
+                  // TODO: add hours
+                  console.log('accept')
                 }}>
                     <Text style={{fontFamily: FontFamily.regular, color: Colors.darkText, fontSize: FontSizes.body}}>Accept</Text>
                 </Pressable>
@@ -195,8 +166,9 @@ export default function TaskRequests({ gardenId, onRefresh }: GardenSettingsProp
                   padding: Spacing.xs,
                   margin: Spacing.xs,
                 }} onPress={async () => {
-                  await removeFromRequested(item.requesterId, item.taskId);
-                  console.log('denied users task request')
+                  await removeFromPending(item.requesterId, item.taskId);
+                  await addToAssigned(item.requesterId, item.taskId);
+                  console.log('denied')
                 }}>
                     <Text style={{fontFamily: FontFamily.regular, color: Colors.darkText, fontSize: FontSizes.body}}>Deny</Text>
                 </Pressable>

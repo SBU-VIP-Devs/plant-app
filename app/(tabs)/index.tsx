@@ -1,25 +1,16 @@
 import 'react-native-gesture-handler';
 import 'expo-dev-client';
-import { StyleSheet, Text, View, Button, FlatList, Modal, RefreshControl } from 'react-native';
+import { Text, View, Button, FlatList, Modal, RefreshControl } from 'react-native';
 import TaskCard from '../../components/TaskCard'
+import { CommonStyles } from '../../styles';
+import { Colors, Spacing } from '../../constants';
 
 
 export default function Login() {
-  
+
   return (
-    <View style={styles.container}>
+    <View style={CommonStyles.fullScreenContainer}>
       <Text>login screen! hello</Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    paddingTop: 20,
-    alignItems: 'center',
-    flex: 1,
-    backgroundColor: '#cad2c5',
-  },
-});

@@ -5,18 +5,14 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { TextInput } from 'react-native-gesture-handler';
 import SignIn from './signin';
 import { useEffect, useState } from 'react';
-import { 
-  User, 
-  onAuthStateChanged,
-  GoogleAuthProvider,
-  signInWithCredential, 
-} from 'firebase/auth';
+import { User } from 'firebase/auth';
 import { FIREBASE_AUTH } from '../firebaseconfig';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-// import Config from 'react-native-config';
 import Constants from 'expo-constants';
+import { Colors } from '../constants';
+import db from '../services/database';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -55,8 +51,7 @@ export default function RootLayout() {
   useEffect(() => {
     //if(!user)
       //checkLocalUser();
-    //const unsub = 
-    onAuthStateChanged(FIREBASE_AUTH, (user) => {
+    const unsub = db.auth.onAuthStateChanged((user) => {
         console.log('user', user);
         console.log(JSON.stringify(user, null, 2));
         setUser(user);
@@ -64,7 +59,7 @@ export default function RootLayout() {
         //saves user sign info locally, encrypt this for more security
         //await AsyncStorage.setItem("@user", JSON.stringify(user))
     });
-    //return () => unsub();
+    return () => unsub();
   }, []);
 
   //check google sign in
@@ -72,8 +67,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (response?.type == "success") {
       const { id_token } = response.params;
-      const credential = GoogleAuthProvider.credential(id_token);
-      signInWithCredential(FIREBASE_AUTH, credential);
+      db.auth.signInWithGoogleCredential(id_token);
     }
   }, [response]);
 
@@ -92,10 +86,10 @@ export default function RootLayout() {
                 title: 'Plant App',
                 headerShown: true,
                 headerStyle: {
-                  backgroundColor: "#84a98c"
+                  backgroundColor: Colors.primary
                 },
             }}
-        /> 
+        />
       </Stack>
   ):(
       <SignIn promptAsync={ promptAsync }/>
