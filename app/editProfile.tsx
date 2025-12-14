@@ -13,23 +13,29 @@ type Props = {
   onHide: () => void;
   onRefresh: () => void;
   oldbio: string | null;
+  oldYear: string | null;
+  oldPronouns: string | null;
   roleTags: {id: string; title: string}[];
   userID: string | undefined;
 };
 
-export default function EditProfile({ onHide, onRefresh, oldbio, roleTags , userID}: Props) {
+export default function EditProfile({ onHide, onRefresh, oldbio, roleTags , userID, oldYear, oldPronouns}: Props) {
     // const user = FIREBASE_AUTH.currentUser;
     
     const [newBio, setNewBio] = useState(oldbio || '');
-    const [newYear, setYear] = useState('');
+    const [newYear, setNewYear] = useState('');
+    const [newPronouns, setNewPronouns] = useState('');
+
 
     const bio = (text: string) => {
         setNewBio(text);
     };
     const year = (text: string) => {
-        setNewBio(text);
+        setNewYear(text);
     };
-
+    const pronouns = (text: string) => {
+        setNewPronouns(text);
+    };
 
     const updateBio = async () => {
         try {//newgarden.tsx
@@ -38,13 +44,15 @@ export default function EditProfile({ onHide, onRefresh, oldbio, roleTags , user
                 const profile = doc(FIRESTORE_DB, 'profiles', userID);
                 await updateDoc(profile, {
                     bio: newBio,
+                    year: newYear,
+                    pronouns: newPronouns,
                 });
                 onRefresh(); 
-                console.log('Bio updated successfully!');
+                console.log('Info updated successfully!');
             }
             
         } catch (error) {
-            console.error('Error updating Bio: ', error);
+            console.error('Error updating Info: ', error);
         }
     };
 
@@ -59,25 +67,24 @@ export default function EditProfile({ onHide, onRefresh, oldbio, roleTags , user
             <View style={styles.content}>
                 <View style={{ marginBottom: 10 }}>
                     <Text>Edit Bio: </Text>
-                    <TextInput style={styles.text} multiline={true} maxLength={150} placeholder= "Enter a new Bio" value={newBio} onChangeText={bio} />
+                    <TextInput style={styles.text} multiline={true} maxLength={150} placeholder= "Edit your Bio" value={newBio} onChangeText={bio} />
                     <Text style={{ fontSize: 8 }}>-/150 characters left</Text>
-                </View>
-                <View style={{ marginBottom: 10 }}>
-                    <Text>Click to delete</Text>
-                                 {roleTags.map((role) => (
-                                   <View key={role.id} style={styles.tags}>
-                                     <Text style={{ color: "#cad2c5", fontWeight: "bold" }}>{String(role.title)}</Text>
-                                   </View>
-                                 ))} 
-                    <Text style={{ borderColor: '#84a98c', borderWidth: 2, margin: 5 }}>test{}</Text>
 
+                    <Text>Edit Year: </Text>
+                    <TextInput style={styles.text} multiline={true} maxLength={150} placeholder= "Edit your academic standing" value={newYear} onChangeText={year} />
+                    <Text style={{ fontSize: 8 }}>-/150 characters left</Text>
+
+                    <Text>Edit Pronouns: </Text>
+                    <TextInput style={styles.text} multiline={true} maxLength={150} placeholder= "Edit your Pronouns" value={newPronouns} onChangeText={pronouns} />
+                    <Text style={{ fontSize: 8 }}>-/150 characters left</Text>
+                    
                 </View>
-                <View style={{ marginBottom: 10, }}>
+                {/* <View style={{ marginBottom: 10, }}>
                     <Text>Add Tag: </Text>
                     <TextInput style={styles.text} multiline={true} maxLength={20} />
                     <Text style={{ fontSize: 8 }}>-/20 characters left</Text>
 
-                </View>
+                </View> */}
                 <Button title="Submit" onPress={submit} />
             </View>
         </View>

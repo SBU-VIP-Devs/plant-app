@@ -1,7 +1,7 @@
 import 'react-native-gesture-handler';
 import 'expo-dev-client';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Button, Image, FlatList, ImageBackground, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import { StyleSheet, Text, View, Button, Image, FlatList, Alert, ImageBackground, ScrollView, Platform, TouchableOpacity, Modal } from 'react-native';
 import { Link } from 'expo-router';
 import { useLocalSearchParams } from 'expo-router';
 import { FIREBASE_AUTH } from '../../firebaseconfig';
@@ -10,12 +10,16 @@ import { signOut } from 'firebase/auth';
 import { useState, useEffect } from 'react';
 import { DataTable } from 'react-native-paper';
 import TaskCard from '../../components/TaskCard'
-import { doc, getDoc, setDoc, QuerySnapshot, collection, getDocs, onSnapshot } from "firebase/firestore";
-import { FIRESTORE_DB } from '../../firebaseconfig';
+import { doc, getDoc, setDoc, addDoc, QuerySnapshot, collection, getDocs, onSnapshot } from "firebase/firestore";
+import { FIRESTORE_DB, FIREBASE_STORAGE } from '../../firebaseconfig';
 import NewTask from '../inputscreens/newtask';
 
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import ImagePicker from 'react-native-image-crop-picker';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+
+
 import EditProfile from "../editProfile";
 
 const Stack = createNativeStackNavigator();
@@ -54,17 +58,22 @@ export default function Users() {
   const [emailLocal, setEmail] = useState(user?.email);
   const [bioLocal, setBio] = useState(null); //bioLocal && (<Text>{bioLocal}</Text>) // Only shows the bio if exists
   const [hoursLocal, setHours] = useState(0);
-  const [dateLocal, setDate] = useState(null);
-  const [detailLocal, setDetail] = useState("No details provided");
-  const [locLocal, setLoc] = useState(null);
   const [roleLocal, setRole] = useState<{ id: string; title: string }[]>([]);
   const [yearLocal, setYear] = useState(null);
   const [pronounsLocal, setPronouns] = useState(null);
+  const [profilePic, setProfilePic] = useState<string | null>(null)
+    const [uploading, setUploading] = useState(false)
+    const [progress, setProgress] = useState(0)
 
-  const [editClicked, setEditClicked] = useState(false);
+    
   const [editVisible, setEditVisible] = useState(false);
   const show = () => setEditVisible(true);
   const hide = () => setEditVisible(false);
+
+  const [dateLocal, setDate] = useState(null);
+  const [detailLocal, setDetail] = useState("No details provided");
+  const [locLocal, setLoc] = useState(null);
+  const [editClicked, setEditClicked] = useState(false);
 
   //READS TASKLIST FROM FIREBASE
 
@@ -159,6 +168,8 @@ export default function Users() {
           setYear(profileData.year);
           setPronouns(profileData.pronouns);
 
+          //libary from jamies code, upload image to image, get that link
+          //when save to firebase, put the link
           // ...
       } else {
         await setDoc(docRef, {
@@ -183,6 +194,102 @@ export default function Users() {
   const onRefresh = () => {
     getProfile();
   }
+
+
+
+
+
+// function takePhotoFromCamera() {
+//       ImagePicker.openCamera({
+//         width: 300,
+//         height: 300,
+//         cropping: true,
+//       }).then(profilePic => {
+//         console.log(profilePic);
+//         const imageUri = Platform.OS == 'ios' ? profilePic.sourceURL : profilePic.path; 
+//         setProfilePic(imageUri?imageUri:profilePic.path)
+//       }).catch(error => {
+//         if (error.code === 'E_PICKER_CANCELLED') {
+//           return false;
+//         }
+//       });
+//     }
+
+//     function choosePhotoFromLibrary() {
+//       ImagePicker.openPicker({
+//         width: 300,
+//         height: 300,
+//         cropping: true
+//       }).then(profilePic => {
+//         console.log(profilePic);
+//         const imageUri = Platform.OS == 'ios' ? profilePic.sourceURL : profilePic.path; 
+//         setProfilePic(imageUri?imageUri:profilePic.path)
+//       }).catch(error => {
+//         if (error.code === 'E_PICKER_CANCELLED') {
+//           return false;
+//         }
+//       });
+//     }
+    
+    // async function uploadGardenRecord(imageURL: string | null, createdAt: string, 
+    //   gardenName: string, desc: string, username: string, userId: string | null, roles: {[key: string]: string} | null) {
+    //   try {
+    //     const docRef = await addDoc(collection(FIRESTORE_DB, 'garden-post-info'), {
+    //       imageURL,
+    //       createdAt,
+    //       gardenName,
+    //       desc,
+    //       username,
+    //       userId,
+    //       roles
+    //       //userImage,
+    //       //add whether user joined locally, when creating local list, not here
+    //       //add these here and to the top of uploadGardenRecord ^^
+    //     })
+    //     console.log('Document saved correctly.', docRef.id)
+    //     Alert.alert('Garden created successfully!')
+    //   } catch(e) {
+    //     console.log(e)
+    //   }
+    // }
+
+    // const uploadGardenPost = async () => {
+    //   if(profilePic) {
+    //     const response = await fetch(profilePic);
+    //     //converts to binary large object (blob) to send to db
+    //     const blob = await response.blob();
+
+    //     const storageRef = ref(FIREBASE_STORAGE, 'GardenImages/IMG_' + new Date().getTime())
+    //     const uploadTask = uploadBytesResumable(storageRef, blob)
+
+    //     //listen for events
+    //     uploadTask.on('state_changed',
+    //       (snapshot) => {
+    //         setUploading(true)
+    //         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+    //         console.log('Upload is ' + progress + '% done')
+    //         setProgress(Math.floor(progress))
+    //       },
+    //       (error) => {
+    //         console.log(error)
+    //       },
+    //       () => {
+    //         getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
+    //           console.log('File available at', downloadURL);
+    //           //save record
+    //           //TODO: save profile pics per user and extract them from users
+    //           await uploadGardenRecord(downloadURL, new Date().toISOString(), name, desc, username, userId, userList)
+              
+    //           setUploading(false)
+    //           setProfilePic('')
+    //         })
+    //       }
+    //     )
+    //   } else {
+    //     await uploadGardenRecord(null, new Date().toISOString(), name, desc, username, userId, userList)
+    //   }
+    // }
+    
 
 
 
@@ -224,10 +331,16 @@ export default function Users() {
              ))}
            </ScrollView> */}
             <ScrollView horizontal={true} >
-              <View style={styles.tags}>
-                <Text style={{ color: "#cad2c5", fontWeight: "bold" }}>Test</Text>
-                {/* <Text style={{ color: "#cad2c5", fontWeight: "bold" }}>Test2</Text> */}
-              </View>
+                {yearLocal !== "" && (
+                  <View style={styles.tags}>
+                    <Text style={{ color: "#cad2c5", fontWeight: "bold" }}>{yearLocal}</Text>
+                  </View>
+                )}
+                {pronounsLocal !== "" && (
+                  <View style={styles.tags}>
+                    <Text style={{ color: "#cad2c5", fontWeight: "bold" }}>{pronounsLocal}</Text>
+                  </View>
+                )}
             </ScrollView>
 
             {/* <FlatList
@@ -266,7 +379,7 @@ export default function Users() {
                   {/* <NewGarden/> */}
                 </View>
                 <View>
-                  <EditProfile onHide={hide} onRefresh={onRefresh} oldbio={bioLocal} roleTags={roleLocal} userID={userID} />
+                  <EditProfile onHide={hide} onRefresh={onRefresh} oldbio={bioLocal} roleTags={roleLocal} userID={userID} oldYear={yearLocal} oldPronouns={pronounsLocal}/>
                 </View>
               </Modal>
 
